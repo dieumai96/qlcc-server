@@ -3,6 +3,7 @@ const morgan = require('morgan');
 const path = require('path');
 const app = express();
 
+const fileRoutes = require("./router/api/uploadFile");
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -26,6 +27,7 @@ app.use((req, res, next) => {
     next();
 });
 
+app.use("/api/v1/", fileRoutes);
 // Use mongoose promise library
 
 module.exports = app;
