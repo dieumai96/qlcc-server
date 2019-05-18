@@ -11,7 +11,6 @@ router.post('/employee/create', passport.authenticate('jwt', { session: false })
 
     let Auth = req.user;
     let id = Auth.id;
-    console.log(Auth);
     let { phone, password, email, birthDate, roles, note, avatar } = req.body;
     Employee.findById(id)
         .then(employee => {
@@ -21,6 +20,7 @@ router.post('/employee/create', passport.authenticate('jwt', { session: false })
                     msg: 'Khong tim thay nhan vien'
                 })
             }
+            employee = employee.toJSON();
             if (!employee.roles.includes("ADMIN") || !employee.roles.includes("ROOT")) {
                 return res.status(400).json({
                     status: 1,
@@ -97,7 +97,7 @@ router.post('/employee/login', async (req, res, next) => {
                     console.log("SAO DEO VAO DAY", isMatch);
                     if (isMatch) {
                         const payload = {
-                            id: employee1.id,
+                            id: employee1._id,
                             fullName: employee1.fullName,
                             phone: employee1.phone,
                             date: Date.now(),
@@ -112,7 +112,7 @@ router.post('/employee/login', async (req, res, next) => {
                             (err, token) => {
                                 res.status(200).json({
                                     status: 0,
-                                    token: token,
+                                    token: 'Bearer ' + token,
                                     data: employee1
                                 })
                             }
