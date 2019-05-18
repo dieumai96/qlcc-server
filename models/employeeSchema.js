@@ -4,4 +4,4 @@ const Schema = mongoose.Schema;
 
 var employeeSchema = new Schema({}, { strict: false })
 
-module.exports = mongoose.model("Employee", employeeSchema);
+module.exports = mongoose.model("employees", employeeSchema);

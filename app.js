@@ -2,14 +2,17 @@ const express = require('express');
 const morgan = require('morgan');
 const path = require('path');
 const passport = require('passport');
+const bodyParser = require('body-parser');
 
 const app = express();
 
 const fileRoutes = require("./router/api/uploadFile");
 const employeeRouter = require('./router/api/employeeHandler');
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+// parse application/json
+app.use(bodyParser.json())
 // Use http logger middleware
 app.use(morgan('dev'));
 

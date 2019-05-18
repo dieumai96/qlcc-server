@@ -9,7 +9,7 @@ mongoose.Promise = require('bluebird');
 
 async function init() {
     try {
-        const isConnected = await mongoose.connect(`mongodb://localhost/express`
+        const isConnected = await mongoose.connect(`mongodb://localhost/express-qlcc`
             , {
                 useNewUrlParser: true,
                 useCreateIndex: true,
