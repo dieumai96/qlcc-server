@@ -33,6 +33,6 @@ const buildingSchema = new Schema({
         type: Object,
         require: true,
     },
-    createBy: { type: Schema.Types.ObjectId, ref: 'Employee' },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'Employee' },
 })
 module.exports = mongoose.model("Building", buildingSchema);
