@@ -1,9 +1,12 @@
 const express = require('express');
 const morgan = require('morgan');
 const path = require('path');
+const passport = require('passport');
+
 const app = express();
 
 const fileRoutes = require("./router/api/uploadFile");
+const employeeRouter = require('./router/api/employeeHandler');
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -13,6 +16,11 @@ app.use(morgan('dev'));
 // Set static folder
 app.use('/public', express.static(path.resolve(__dirname, 'public')));
 
+// Passport middleware
+app.use(passport.initialize());
+
+// Passport Config
+require('./middleware/passport')(passport);
 // Handling CORS Errors
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -28,6 +36,8 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/v1/", fileRoutes);
+app.use('/api/', employeeRouter);
+
 // Use mongoose promise library
 
 module.exports = app;
