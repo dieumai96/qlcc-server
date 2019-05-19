@@ -5,15 +5,17 @@ const jwt = require('jsonwebtoken');
 const keys = require('./../../config/keys');
 const passport = require('passport');
 const CONST = require('./../../config/const');
+const Building = require('./../../models/buildingSchema');
+const utils = require('./../../config/utils');
 const router = express.Router();
 
 router.post('/create', passport.authenticate('jwt', { session: false }), (req, res, next) => {
 
     let Auth = req.user;
     let id = Auth.id;
-    let { phone, password, email, birthDate, roles, note, avatar } = req.body;
+    let { phone, password, email, birthDate, roles, note, avatar, buildingID, fullName } = req.body;
     Employee.findById(id)
-        .then(employee => {
+        .then(async employee => {
             if (!employee) {
                 return res.status(400).json({
                     status: 1,
@@ -36,47 +38,58 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
                 password,
                 created: Date.now(),
                 avatar: avatar,
+                buildingID,
+                fullName,
+                fullNameKhongDau: utils.locDau(fullName),
                 status: CONST.STATUS.ACTIVE
             }
-            Employee.find({ phone: phone })
-                .then(exists => {
-                    if (exists.length) {
-                        return res.status(400).json({
-                            status: 1,
-                            msg: 'Nguoi dung nay da ton tai'
-                        })
-                    } else {
-                        let newEmployee = new Employee(payload);
-                        bcrypt.genSalt(10, (err, salt) => {
-                            bcrypt.hash(newEmployee.password, salt, (err, hash) => {
-                                if (err) throw err;
-                                newEmployee.password = hash;
-                                newEmployee
-                                    .save()
-                                    .then(employee => res.json({
-                                        status: 0,
-                                        msg: 'Them moi nhan vien thanh cong',
-                                        data: employee
-                                    }))
-                                    .catch(err => console.log(err));
+            let building = await Building.findById(buildingID);
+            if (building) {
+                Employee.find({ phone: phone })
+                    .then(exists => {
+                        if (exists.length) {
+                            return res.status(400).json({
+                                status: 1,
+                                msg: 'Nguoi dung nay da ton tai'
                             })
+                        } else {
+                            let newEmployee = new Employee(payload);
+                            bcrypt.genSalt(10, (err, salt) => {
+                                bcrypt.hash(newEmployee.password, salt, (err, hash) => {
+                                    if (err) throw err;
+                                    newEmployee.password = hash;
+                                    newEmployee
+                                        .save()
+                                        .then(employee => res.json({
+                                            status: 0,
+                                            msg: 'Them moi nhan vien thanh cong',
+                                            data: employee
+                                        }))
+                                        .catch(err => console.log(err));
+                                })
+                            })
+                        }
+                    }, err => {
+                        return res.status(500).json({
+                            status: 1,
+                            msg: 'Co loi he thong xay ra',
+                            err: err
                         })
-                    }
-                }, err => {
-                    return res.status(500).json({
-                        status: 1,
-                        msg: 'Co loi he thong xay ra',
-                        err: err
                     })
+            } else {
+                return res.status(400).json({
+                    msg: 'Khong tim thay chung cu',
+                    status: 1
                 })
-        }
-            , err => {
-                return res.status(500).json({
-                    status: 1,
-                    msg: 'Co loi he thong xay ra',
-                    err: err
-                })
+            }
+
+        }, err => {
+            return res.status(500).json({
+                status: 1,
+                msg: 'Co loi he thong xay ra',
+                err: err
             })
+        })
 })
 
 router.post('/login', async (req, res, next) => {
