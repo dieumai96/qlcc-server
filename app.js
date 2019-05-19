@@ -9,6 +9,7 @@ const app = express();
 const fileRoutes = require("./router/api/uploadFile");
 const employeeRouter = require('./router/api/employeeHandler');
 const buildingRouter = require('./router/api/buildingHandler');
+const flatRouter = require('./router/api/flatHandler');
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -41,7 +42,8 @@ app.use((req, res, next) => {
 
 app.use("/api/v1/", fileRoutes);
 app.use('/api/employee', employeeRouter);
-app.use('/api/building', buildingRouter)
+app.use('/api/building', buildingRouter);
+app.use('/api/flat', flatRouter);
 // Use mongoose promise library
 
 module.exports = app;

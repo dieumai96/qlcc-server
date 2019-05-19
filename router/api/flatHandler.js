@@ -8,10 +8,10 @@ const Flat = require('../../models/flatSchema');
 const passport = require('passport');
 
 
+
 router.post('/create', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const Auth = req.user;
     const employeeID = Auth.id;
-    const buildingID = Auth.buildingID;
     let { block, soPhong, owerName, phone, acreage, flatType, note } = req.body;
     try {
         let employee = await Employee.findById(employeeID);
@@ -28,7 +28,8 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
                 msg: 'Ban khong co quyen thuc hien thao tac nay'
             })
         }
-        let building = await Building.findById(buildingID);
+        let building = await Building.findById(employee.buildingID);
+        console.log(building);
         if (!building) {
             return res.status(400).json({
                 msg: 'Ban khong thuoc pham vi toa nha nao',
@@ -43,25 +44,34 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
             }
             let genCode = await utils.genCode(5);
             let code = building.code + genCode;
-            let flatDto = new Flat({
-                block,
-                soPhong,
-                owerName,
-                phone,
-                acreage,
-                flatType,
-                note,
-                created: Date.now,
-                createdBy: employeeID,
-                buildingID,
-                code: code.toUpperCase(),
-            })
-            let newFlat = await flatDto.save();
-            return res.status(400).json({
-                msg: 'Them moi can ho thanh cong',
-                status: 0,
-                data: newFlat,
-            })
+            let conditionFlatExis = { block, soPhong };
+            let existsFlat = await Flat.find(conditionFlatExis);
+            if (existsFlat.length) {
+                return res.status(200).json({
+                    status: 1,
+                    msg: 'Can ho nay da ton tai trong he thong'
+                })
+            } else {
+                let flatDto = new Flat({
+                    block,
+                    soPhong,
+                    owerName,
+                    phone,
+                    acreage,
+                    flatType,
+                    note,
+                    created: Date.now,
+                    createdBy: employeeID,
+                    buildingID: employee.buildingID,
+                    code: code.toUpperCase(),
+                })
+                let newFlat = await flatDto.save();
+                return res.status(400).json({
+                    msg: 'Them moi can ho thanh cong',
+                    status: 0,
+                    data: newFlat,
+                })
+            }
         }
     } catch (err) {
         return res.status(500).json({
@@ -70,3 +80,8 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
         })
     }
 })
+
+router.post('/createMulti', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    
+})
+module.exports = router;
