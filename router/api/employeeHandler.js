@@ -116,6 +116,9 @@ router.post('/login', async (req, res, next) => {
                             date: Date.now(),
                             email: employee1.email,
                         }
+                        if (employee1.buildingID) {
+                            payload.buildingID = employee1.buildingID;
+                        }
                         jwt.sign(
                             payload,
                             keys.secretOnKey,
