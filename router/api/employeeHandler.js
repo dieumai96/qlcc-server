@@ -7,7 +7,7 @@ const passport = require('passport');
 const CONST = require('./../../config/const');
 const router = express.Router();
 
-router.post('/employee/create', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+router.post('/create', passport.authenticate('jwt', { session: false }), (req, res, next) => {
 
     let Auth = req.user;
     let id = Auth.id;
@@ -79,7 +79,7 @@ router.post('/employee/create', passport.authenticate('jwt', { session: false })
             })
 })
 
-router.post('/employee/login', async (req, res, next) => {
+router.post('/login', async (req, res, next) => {
     let { phone, password } = req.body;
     Employee.findOne({ phone: phone })
         .then(employee => {
@@ -142,5 +142,6 @@ router.post('/employee/login', async (req, res, next) => {
             })
         })
 })
+
 
 module.exports = router;
