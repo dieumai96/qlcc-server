@@ -144,4 +144,27 @@ router.post('/login', async (req, res, next) => {
 })
 
 
+router.post('/profile', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const Auth = req.user;
+    const employeeID = Auth.id;
+    try {
+        let employee = await Employee.findById(employeeID);
+        if (!employee) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        }
+        return res.status(200).json({
+            msg: 'Lay thong tin nhan vien thanh cong',
+            data: employee,
+            status: 0
+        })
+    } catch (err) {
+        return res.status(500).json({
+            status: -1,
+            msg: 'Co loi xay ra, vui long thu lai sau'
+        })
+    }
+})
 module.exports = router;
