@@ -7,4 +7,8 @@ internals.STATUS = {
     DELETE: 9
 }
 
+internals.USER_TYPE = {
+    EMPLOYEE: 'Employee',
+    USER: 'User'
+}
 module.exports = internals;

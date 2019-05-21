@@ -40,6 +40,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
                 avatar: avatar,
                 buildingID,
                 fullName,
+                userType: CONST.USER_TYPE.EMPLOYEE,
                 fullNameKhongDau: utils.locDau(fullName),
                 status: CONST.STATUS.ACTIVE
             }
@@ -115,6 +116,8 @@ router.post('/login', async (req, res, next) => {
                             phone: employee1.phone,
                             date: Date.now(),
                             email: employee1.email,
+                            userType: employee1.userType,
+
                         }
                         if (employee1.buildingID) {
                             payload.buildingID = employee1.buildingID;

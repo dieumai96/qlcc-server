@@ -38,6 +38,7 @@ router.post('/register', async (req, res) => {
                     password,
                     fullNameKhongDau: utils.locDau(fullName),
                     status: constant.STATUS.WAIT_ACTIVE,
+                    userType: constant.USER_TYPE.USER,
                     created: Date.now,
                     soPhong: flatInfomation.soPhong,
                 }
@@ -80,6 +81,7 @@ router.post('/login', async (req, res) => {
                 fullName: user.fullName,
                 date: Date.now,
                 phone: user.phone,
+                userType: user.userType,
             }
             bcrypt.compare(password, user.password).then(isMatch => {
                 console.log("SAO DEO VAO DAY", isMatch);
@@ -125,4 +127,53 @@ router.post('/login', async (req, res) => {
     }
 })
 
+
+// ca nhan cap nhat thong tin 
+router.post('/edit', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const user = req.user;
+    const userID = user.id;
+    try {
+        let user = await User.findById(userID);
+        if (user) {
+            user = user.toJSON();
+            if (user.status == constant.STATUS.REJECT || user.status == constant.STATUS.DELETE) {
+                return res.status(400).json({
+                    status: 1,
+                    msg: 'Tai khoan cua ban da bi khoa, vui long lien he voi ban quan ly'
+                })
+            }
+            let { fullName, homeOwner, hobby, avatar } = req.body;
+            user.fullName = fullName ? fullName : user.fullName;
+            user.homeOwner = homeOwner ? homeOwner : user.homeOwner;
+            user.hobby = hobby ? hobby : user.hobby;
+            user.avatar = avatar ? avatar : user.avatar;
+            User.updateOne({ _id: userID }, {
+                $set: user,
+                $currentDate: { lastModified: true }
+            }, function (err, res1) {
+                if (err) {
+                    return res.status(400).json({
+                        status: 1,
+                        msg: err,
+                    })
+                }
+                return res.status(200).json({
+                    status: 0,
+                    msg: 'Cap nhat thong tin thanh cong'
+                })
+            })
+        } else {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        }
+
+    } catch (err) {
+        return res.status(500).json({
+            msg: 'Co loi xay ra, vui long thu lai sau',
+            status: -1,
+        })
+    }
+})
 module.exports = router;
