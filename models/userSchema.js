@@ -2,11 +2,10 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 
-var flatSchema = new Schema({
-    createdBy: { type: Schema.Types.ObjectId, ref: 'employees' },
+var userSchema = new Schema({
     buildingID: { type: Schema.Types.ObjectId, ref: 'buildings' },
-
+    flatID: { type: Schema.Types.ObjectId, ref: 'flats' },
 
 }, { strict: false })
 
-module.exports = mongoose.model("flats", flatSchema);
+module.exports = mongoose.model("users", userSchema);

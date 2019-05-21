@@ -109,7 +109,10 @@ router.post('/update', passport.authenticate('jwt', { session: false }), async (
         buildingExists.blocks = blocks ? blocks : buildingExists.blocks;
         buildingExists.totalFlat = totalFlat ? totalFlat : buildingExists.totalFlat;
         buildingExists.address = address ? address : buildingExists.address;
-        Building.updateOne({ _id: buildingID }, { $set: buildingExists }, function (err, res1) {
+        Building.updateOne({ _id: buildingID }, {
+            $set: buildingExists,
+            $currentDate: { lastModified: true }
+        }, function (err, res1) {
             if (err) {
                 return res.status(400).json({
                     status: 1,
