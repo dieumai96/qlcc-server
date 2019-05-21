@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
                 })
             } else {
                 let payload = {
-                    flatID: flatInfomation.id,
+                    flatID: flatInfomation._id,
                     buildingID: flatInfomation.buildingID,
                     fullName,
                     phone,

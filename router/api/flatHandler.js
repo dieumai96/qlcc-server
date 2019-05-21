@@ -272,9 +272,7 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
         }
         let allFlat = await Flat.aggregate([
             { $match: { status: { $in: [1, 2] } } },
-            {
-                $unwind: "$code"
-            },
+           
             {
                 $lookup:
                 {
@@ -284,9 +282,7 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
                     as: "employee_info"
                 },
             },
-            {
-                $unwind: "$employee_info"
-            },
+         
             {
                 $lookup:
                 {
@@ -296,18 +292,17 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
                     as: "building_info"
                 }
             },
+
             {
-                $unwind: "$building_info"
-            },
-            {
-                $group:
+                $lookup:
                 {
-                    _id: "$_id",
-                    code: { $push: "$code" },
-                    employee_info: { $push: "$employee_info" },
-                    building_info: { $push: "$building_info" },
+                    from: 'users',
+                    localField: "_id",
+                    foreignField: "flatID",
+                    as: "listUser"
                 }
-            }
+            },
+            
         ])
         if (allFlat) {
             allFlat.forEach(e => {
