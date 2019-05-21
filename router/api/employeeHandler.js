@@ -117,6 +117,7 @@ router.post('/login', async (req, res, next) => {
                             date: Date.now(),
                             email: employee1.email,
                             userType: employee1.userType,
+                            buildingID: employee1.buildingID,
 
                         }
                         if (employee1.buildingID) {
