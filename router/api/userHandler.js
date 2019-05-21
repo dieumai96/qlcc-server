@@ -1,8 +1,6 @@
 const express = require('express');
 
 const router = express.Router();
-const Employee = require('./../../models/employeeSchema');
-const Building = require('./../../models/buildingSchema');
 const User = require('./../../models/userSchema');
 const Flat = require('./../../models/flatSchema');
 const utils = require('../../config/utils');
