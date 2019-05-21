@@ -9,10 +9,13 @@ const utils = require('../../config/utils');
 const passport = require('passport');
 const constant = require('./../../config/const');
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const keys = require('./../../config/keys');
 router.post('/register', async (req, res) => {
     let { flatCode, fullName, phone, password } = req.body;
     try {
-        let flatInfomation = await Flat.findOne({ flatCode: flatCode });
+        let flatInfomation = await Flat.findOne({ code: flatCode });
+        console.log(flatInfomation);
         if (!flatInfomation) {
             return res.status(400).json({
                 msg: 'Khong tim thay can ho',
@@ -62,6 +65,64 @@ router.post('/register', async (req, res) => {
         })
     }
 
+})
+
+router.post('/login', async (req, res) => {
+    try {
+        let { phone, password } = req.body;
+        let findUser = await User.aggregate([
+            { $match: { phone: phone, status: { $in: [1, 2] } } },
+        ]);
+        if (findUser.length) {
+            let user = findUser[0];
+            let payload = {
+                id: user._id,
+                fullName: user.fullName,
+                date: Date.now,
+                phone: user.phone,
+            }
+            bcrypt.compare(password, user.password).then(isMatch => {
+                console.log("SAO DEO VAO DAY", isMatch);
+                if (isMatch) {
+                    jwt.sign(
+                        payload,
+                        keys.secretOnKey,
+                        {
+                            expiresIn: (Math.floor(new Date().getTime() / 1000) + (7 * 24 * 60 * 60)) * 1000
+                        },
+                        (err, token) => {
+                            res.status(200).json({
+                                status: 0,
+                                token: 'Bearer ' + token,
+                                data: user
+                            })
+                        }
+                    )
+                } else {
+                    return res.status(400).json({
+                        msg: 'Thong tin dang nhap khong chinh xac',
+                        status: 1,
+                    })
+                }
+            }, err => {
+                return res.status(500).json({
+                    msg: 'Co loi xay ra, vui long thu lai sau',
+                    status: -1,
+                })
+            })
+
+        } else {
+            return res.status(400).json({
+                msg: 'Khong tim thay thong tin nguoi dung',
+                status: 1
+            })
+        }
+    } catch (err) {
+        return res.status(500).json({
+            msg: 'Co loi xay ra, vui long thu lai sau',
+            status: -1,
+        })
+    }
 })
 
 module.exports = router;
