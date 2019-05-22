@@ -36,7 +36,10 @@ var flatSchema = new Schema({
         type: Date,
         default: Date.now,
     },
-
+    code: {
+        type: String,
+        required: true,
+    }
 })
 
 module.exports = mongoose.model("flats", flatSchema);

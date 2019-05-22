@@ -105,7 +105,7 @@ router.post('/createMulti', passport.authenticate('jwt', { session: false }), as
             })
         }
         let building = await Building.findById(employee.buildingID);
-        console.log("emp",building);
+        console.log("emp", building);
         let failItem = 0;
         let count = 0;
         if (!building) {
@@ -270,7 +270,7 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
         }
         let allFlat = await Flat.aggregate([
             { $match: { status: { $in: [1, 2] } } },
-           
+
             {
                 $lookup:
                 {
@@ -280,7 +280,7 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
                     as: "employee_info"
                 },
             },
-         
+
             {
                 $lookup:
                 {
@@ -300,7 +300,11 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
                     as: "listUser"
                 }
             },
-            
+            {
+                $sort: {
+                    "timeCreated": -1
+                }
+            }
         ])
         if (allFlat) {
             allFlat.forEach(e => {

@@ -11,7 +11,7 @@ const employeeRouter = require('./router/api/employeeHandler');
 const buildingRouter = require('./router/api/buildingHandler');
 const flatRouter = require('./router/api/flatHandler');
 const userRouter = require('./router/api/userHandler');
-// const notificationRouter = require('./router/api/notificationHandler');
+const notificationRouter = require('./router/api/notificationHandler');
 
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -47,7 +47,7 @@ app.use('/api/employee', employeeRouter);
 app.use('/api/building', buildingRouter);
 app.use('/api/flat', flatRouter);
 app.use('/api/user', userRouter);
-// app.use('/api/notification', notificationRouter);
+app.use('/api/notification', notificationRouter);
 // Use mongoose promise library
 
 module.exports = app;
