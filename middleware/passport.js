@@ -12,7 +12,6 @@ opts.secretOrKey = keys.secretOnKey;
 module.exports = passport => {
     passport.use(
         new JwtStrategy(opts, (jwt_payload, done) => {
-            console.log("jwt",jwt_payload);
             Employee.findById(jwt_payload.id)
                 .then(employee => {
                     if (employee) {

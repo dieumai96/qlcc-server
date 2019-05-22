@@ -84,7 +84,6 @@ router.post('/update', passport.authenticate('jwt', { session: false }), async (
                 msg: 'Khong tim thay thong tin user'
             })
         }
-        employee = employee.toJSON();
         if (!employee.roles.includes("ROOT")) {
             return res.status(400).json({
                 status: 1,
@@ -112,7 +111,6 @@ router.post('/update', passport.authenticate('jwt', { session: false }), async (
         buildingExists.address = address ? address : buildingExists.address;
         Building.updateOne({ _id: buildingID }, {
             $set: buildingExists,
-            $currentDate: { lastModified: true }
         }, function (err, res1) {
             if (err) {
                 return res.status(400).json({

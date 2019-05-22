@@ -21,7 +21,7 @@ var buildingSchema = new Schema({
         required: true
 
     },
-    blokcs: {
+    blocks: {
         type: Array,
         required: true
 
@@ -39,6 +39,9 @@ var buildingSchema = new Schema({
     timeCreated: {
         type: Date,
         default: Date.now,
+    },
+    currentDate : {
+        type : Date,
     },
     totalFlat: {
         type: Number,

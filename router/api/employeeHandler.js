@@ -22,7 +22,8 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
                     msg: 'Khong tim thay nhan vien'
                 })
             }
-            if (!employee.roles.includes("ADMIN") || !employee.roles.includes("ROOT")) {
+            if (!(employee.roles.includes("ADMIN") || employee.roles.includes("ROOT"))) {
+                console.log(employee.roles.includes("ROOT"));
                 return res.status(400).json({
                     status: 1,
                     msg: 'Ban khong co quyen thuc hien thao tac nay'
@@ -105,7 +106,7 @@ router.post('/login', async (req, res, next) => {
                     })
                 }
 
-                bcrypt.compare(password, employee1.password).then(isMatch => {
+                bcrypt.compare(password, employee.password).then(isMatch => {
                     console.log("SAO DEO VAO DAY", isMatch);
                     if (isMatch) {
                         const payload = {
@@ -115,9 +116,9 @@ router.post('/login', async (req, res, next) => {
                             date: Date.now(),
                             email: employee.email,
                             userType: employee.userType,
-                            buildingID: employee.buildingID,
 
                         }
+                        console.log(payload);
                         if (employee.buildingID) {
                             payload.buildingID = employee.buildingID;
                         }
@@ -131,7 +132,7 @@ router.post('/login', async (req, res, next) => {
                                 res.status(200).json({
                                     status: 0,
                                     token: 'Bearer ' + token,
-                                    data: employee1
+                                    data: employee
                                 })
                             }
                         )
