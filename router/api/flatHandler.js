@@ -254,7 +254,6 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
                 msg: 'Khong tim thay thong tin user'
             })
         }
-        employee = employee.toJSON();
         // if (!employee.roles.includes("ADMIN")) {
         //     return res.status(400).json({
         //         status: 1,
