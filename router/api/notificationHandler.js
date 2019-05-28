@@ -3,18 +3,26 @@ const Employee = require('./../../models/employeeSchema');
 const passport = require('passport');
 const CONST = require('./../../config/const');
 const Notification = require('./../../models/notificationSchema');
-// const EventEmployee = require('./../../models/eventEmployee'); 
 const User = require('./../../models/userSchema');
 const Flat = require('./../../models/flatSchema');
 const utils = require('./../../config/utils');
 const logUtil = require('./../../lib/logUtil');
+const EventUser = require('./../../models/eventUser');
 const Rx = require('rxjs');
 const Operators = require('rxjs/operators');
 const router = express.Router();
 
 async function pushNotification(notificationDto, employeeID, buildingID) {
-    console.log("buildingID", buildingID);
     let listEventUseID = [];
+    let listEventEmployeeID = [];
+    let queryEmployee = await Employee.find({
+        buildingID: buildingID,
+        roles: { $in: [CONST.ROLES.ADMIN, CONST.ROLES.RCN] },
+        status: { $in: [CONST.STATUS.ACTIVE, CONST.STATUS.WAIT_ACTIVE] }
+    });
+    queryEmployee.forEach(e => {
+        listEventEmployeeID.push(e._id);
+    })
     if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.ALL) {
         let query = await User.aggregate([
             {
@@ -36,13 +44,13 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
                 },
             },
         ])
+
         query.forEach(e => {
             listEventUseID.push(e._id);
         })
     }
     if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.BUILDING) {
         let listBuilding = notificationDto.notifyScope.refs;
-        let allBuilding = Rx.from(listBuilding);
         logUtil.error(listBuilding);
         let query = await User.aggregate([
             {
@@ -72,13 +80,11 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
                 }
             }
         })
-       
+
     }
     if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.FLAT) {
         let flatScope = notificationDto.notifyScope.refs;
-        logUtil.error("Flat scope", flatScope);
         let flatList = await Flat.find({ _id: { $in: flatScope } });
-        logUtil.error("Flat list", flatList);
         let listIDFlat = [];
         flatList.forEach(e => {
             listIDFlat.push(e._id);
@@ -91,9 +97,10 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
         query.forEach(e => {
             listEventUseID.push(e._id);
         })
-       
     }
-    
+    let listUserID = [...listEventUseID, ...listEventEmployeeID];
+    logUtil.error(listUserID);
+
 }
 
 router.post('/create', passport.authenticate('jwt', { session: false }), async (req, res) => {

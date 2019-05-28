@@ -10,7 +10,7 @@ var eventUserSchema = new Schema({
         type: String,
         required: true
     },
-    employeeID: { type: Schema.Types.ObjectId, ref: 'employees' },
+    userID: { type: Schema.Types.ObjectId, ref: 'employees' },
     read: {
         type: Boolean,
         default: false

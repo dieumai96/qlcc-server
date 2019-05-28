@@ -21,4 +21,9 @@ internals.SCOPE_NOTIFICATION = {
     BUILDING: 2,
     FLAT: 3,
 }
+
+internals.ROLES = {
+    ADMIN: 'ADMIN',
+    RCN: 'RCN',
+}
 module.exports = internals;
