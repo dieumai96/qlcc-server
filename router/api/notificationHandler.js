@@ -39,7 +39,6 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
         query.forEach(e => {
             listEventUseID.push(e._id);
         })
-        // logUtil.error(query); 
     }
     if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.BUILDING) {
         let listBuilding = notificationDto.notifyScope.refs;
@@ -73,44 +72,28 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
                 }
             }
         })
-        console.log(listEventUseID);
+       
     }
     if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.FLAT) {
         let flatScope = notificationDto.notifyScope.refs;
         logUtil.error("Flat scope", flatScope);
-        let flatList = await Flat.aggregate([
-            {
-                $match: { // filter only those posts in september
-                    $and: [
-                        { id: { $in: flatScope } },
-                       
-                    ]
-                },
-
-            },
-        ])
+        let flatList = await Flat.find({ _id: { $in: flatScope } });
         logUtil.error("Flat list", flatList);
         let listIDFlat = [];
         flatList.forEach(e => {
-            listIDFlat.push(e);
+            listIDFlat.push(e._id);
         })
-        let query = await User.aggregate([
-            {
-                $match: { // filter only those posts in september
-                    $and: [
-                        { buildingID: buildingID },
-                        { status: { $in: [1, 2] } },
-                        { flatID: { $in: listIDFlat } }
-                    ]
-                },
-
-            },
-        ])
+        let query = await User.find({
+            buildingID: buildingID,
+            status: { $in: [1, 2] },
+            flatID: { $in: listIDFlat },
+        })
         query.forEach(e => {
             listEventUseID.push(e._id);
         })
-        logUtil.error("Thong tin ", listEventUseID);
+       
     }
+    
 }
 
 router.post('/create', passport.authenticate('jwt', { session: false }), async (req, res) => {
