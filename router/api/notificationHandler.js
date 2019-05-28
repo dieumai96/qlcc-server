@@ -11,6 +11,9 @@ const EventUser = require('./../../models/eventUser');
 const Rx = require('rxjs');
 const Operators = require('rxjs/operators');
 const router = express.Router();
+let flagCreateNotificationSuccessInitial = null;
+let flagCreateNotificationSuccess = new Rx.BehaviorSubject(flagCreateNotificationSuccessInitial);
+let flagCreateNotificationSuccess$ = flagCreateNotificationSuccess.asObservable();
 
 async function pushNotification(notificationDto, employeeID, buildingID) {
     let listEventUseID = [];
@@ -99,6 +102,30 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
         })
     }
     let listUserID = [...listEventUseID, ...listEventEmployeeID];
+    let rxjsListUserID = Rx.from(listUserID);
+    let countInsert = 0;
+    rxjsListUserID.pipe(
+        Operators.map(data => data),
+        Operators.concatMap(async res => {
+            let newItem = {
+                title: notificationDto.title,
+                content: notificationDto.content,
+                buildingID,
+                userID: res,
+                parentNotificationID: notificationDto.id,
+                createdBy: employeeID,
+                dataType: CONST.DATA_TYPE.NOTIFICATION,
+            }
+            let newEvent = new EventUser(newItem);
+            let save = newEvent.save();
+            return Rx.of({ save })
+        })
+    ).subscribe(data => {
+        countInsert++;
+        if (countInsert == listUserID.length) {
+            flagCreateNotificationSuccess.next(true);
+        }
+    })
     logUtil.error(listUserID);
 
 }
@@ -130,39 +157,18 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
         }
         let newNotification = new Notification(body);
 
-        // let save = await newNotification.save();
-        pushNotification(body, employeeID, employee.buildingID);
+        newNotification.save()
+            .then(async notification => {
+                body.id = notification._id;
+                await pushNotification(body, employeeID, employee.buildingID);
+                return res.status(200).json({
+                    msg: 'Tao thong bao thanh cong',
+                    status: 0,
+                    data: body,
+                })
+            })
 
-        let query = await User.aggregate([
-            {
-                $match: { // filter only those posts in september
-                    $and: [
-                        { buildingID: employee.buildingID },
-                        { status: { $in: [1, 2] } },
-                    ]
-                },
 
-            },
-            {
-                $lookup:
-                {
-                    from: "flats",
-                    localField: "flatID",
-                    foreignField: "_id",
-                    as: "flat_info"
-                },
-            },
-        ])
-        query.forEach(e => {
-            listEventUseID.push(e._id);
-        })
-        logUtil.error(query);
-
-        return res.status(200).json({
-            msg: 'Tao thong bao thanh cong',
-            status: 0,
-            data: body,
-        })
     } catch (err) {
         return res.status(500).json({
             status: -1,

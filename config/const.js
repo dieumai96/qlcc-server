@@ -22,6 +22,10 @@ internals.SCOPE_NOTIFICATION = {
     FLAT: 3,
 }
 
+internals.DATA_TYPE = {
+    NOTIFICATION : 'Notification',
+}
+
 internals.ROLES = {
     ADMIN: 'ADMIN',
     RCN: 'RCN',
