@@ -24,7 +24,10 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
         status: { $in: [CONST.STATUS.ACTIVE, CONST.STATUS.WAIT_ACTIVE] }
     });
     queryEmployee.forEach(e => {
-        listEventEmployeeID.push(e._id);
+        listEventEmployeeID.push({
+            id: e._id,
+            type: 'EventEmployee'
+        });
     })
     if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.ALL) {
         let query = await User.aggregate([
@@ -49,7 +52,11 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
         ])
 
         query.forEach(e => {
-            listEventUseID.push(e._id);
+            listEventUseID.push({
+                id: e._id,
+                userFlatID: e.flatID,
+                type: 'EventUser'
+            });
         })
     }
     if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.BUILDING) {
@@ -79,7 +86,11 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
         query.forEach(e => {
             if (e.flat_info.length) {
                 if (listBuilding.includes(e.flat_info[0].block)) {
-                    listEventUseID.push(e._id);
+                    listEventUseID.push({
+                        id: e._id,
+                        userFlatID: e.flatID,
+                        type: 'EventUser'
+                    });
                 }
             }
         })
@@ -98,7 +109,11 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
             flatID: { $in: listIDFlat },
         })
         query.forEach(e => {
-            listEventUseID.push(e._id);
+            listEventUseID.push({
+                id: e._id,
+                userFlatID: e.flatID,
+                type: 'EventUser'
+            });
         })
     }
     let listUserID = [...listEventUseID, ...listEventEmployeeID];
@@ -111,7 +126,9 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
                 title: notificationDto.title,
                 content: notificationDto.content,
                 buildingID,
-                userID: res,
+                userID: res.id,
+                type: res.type,
+                userFlatID: res.userFlatID,
                 parentNotificationID: notificationDto.id,
                 createdBy: employeeID,
                 dataType: CONST.DATA_TYPE.NOTIFICATION,
@@ -120,7 +137,7 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
             let save = newEvent.save();
             return Rx.of({ save })
         })
-    ).subscribe(data => {
+    ).subscribe(_ => {
         countInsert++;
         if (countInsert == listUserID.length) {
             flagCreateNotificationSuccess.next(true);
@@ -176,4 +193,85 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
         })
     }
 })
+
+
+router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const Auth = req.user;
+    const employeeID = Auth.id;
+    try {
+        let employee = await Employee.findById(employeeID);
+
+        if (!employee) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        }
+        // let getAllNotification = Notification.find({
+        //     status: { $in: [CONST.STATUS.WAIT_ACTIVE, CONST.STATUS.ACTIVE] },
+        //     buildingID: employee.buildingID,
+        // });
+
+        let getAllNotification = await Notification.aggregate([
+            {
+                $match: { // filter only those posts in september
+                    $and: [
+                        { buildingID: employee.buildingID, },
+
+                    ]
+                },
+
+            },
+            {
+                $lookup: {
+                    from: "eventusers",
+                    localField: "_id",
+                    foreignField: "parentNotificationID",
+                    as: "events_docs",
+                }
+            },
+            {
+                $lookup: {
+                    from: "flats",
+                    as: "tb3",
+                    localField: "events_docs.userID",
+                    foreignField: "_id",
+                }
+            },
+            {
+                $sort: {
+                    "timeCreated": -1
+                }
+            }
+        ])
+        for (let i = 0; i < getAllNotification.length; i++) {
+            getAllNotification[i].totalCount = 0;
+            getAllNotification[i].events_docs.forEach(e => {
+                if (e.type == 'EventUser') {
+                    getAllNotification[i].totalCount++;
+                }
+            })
+        }
+        return res.status(200).json({
+            msg: 'ok',
+            data: getAllNotification
+        })
+    } catch (Err) {
+
+    }
+
+})
+
+
+// router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { session: false }), async (req, res) => {
+//     try{
+//         await Notification.remove();
+//         return res.status(200).json({
+//             msg : 'ok'
+//         })
+//     }catch(Err){
+
+//     }
+
+// })
 module.exports = router;

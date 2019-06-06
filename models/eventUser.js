@@ -11,6 +11,7 @@ var eventUserSchema = new Schema({
         required: true
     },
     userID: { type: Schema.Types.ObjectId, ref: 'employees' },
+    userFlatID: { type: Schema.Types.ObjectId, ref: 'flats' },
     read: {
         type: Boolean,
         default: false
@@ -28,7 +29,7 @@ var eventUserSchema = new Schema({
     },
     type: {
         type: String,
-      
+
     }
 
 })
