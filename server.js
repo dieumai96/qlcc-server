@@ -25,7 +25,7 @@ const socket = require('./router/api/socketHandler');
 //     }
 // }
 // init();
-mongoose.connect(`mongodb://localhost/express-qlcc-version2`)
+mongoose.connect(`mongodb://localhost/qlcc-server`)
 .then(res => console.log('Connected MongoDB'))
 .catch(err => console.log(err));
 // socket.init('http://localhost'); 
