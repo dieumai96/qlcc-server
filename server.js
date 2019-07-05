@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const app = require('./app');
 const port = process.env.PORT || 3000;
 const server = http.createServer(app);
-
+const socket = require('./router/api/socketHandler');
 // Connecting to mongodb
 
 // async function init() {
@@ -28,7 +28,7 @@ const server = http.createServer(app);
 mongoose.connect(`mongodb://localhost/express-qlcc-version2`)
 .then(res => console.log('Connected MongoDB'))
 .catch(err => console.log(err));
-
+// socket.init('http://localhost'); 
 app.listen(port, () => {
     console.log(`Server in running in port ${port}`);
 })

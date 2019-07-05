@@ -12,7 +12,7 @@ const buildingRouter = require('./router/api/buildingHandler');
 const flatRouter = require('./router/api/flatHandler');
 const userRouter = require('./router/api/userHandler');
 const notificationRouter = require('./router/api/notificationHandler');
-
+const socket = require('./router/api/socketHandler');
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
@@ -25,7 +25,6 @@ app.use('/public', express.static(path.resolve(__dirname, 'public')));
 
 // Passport middleware
 app.use(passport.initialize());
-
 // Passport Config
 require('./middleware/passport')(passport);
 // Handling CORS Errors

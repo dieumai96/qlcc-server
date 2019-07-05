@@ -5,7 +5,7 @@ var SocketHandler = {};
 var online_users = {};
 
 SocketHandler.init = function (server) {
-    var io = require('socket.io')(listent.server);
+    var io = require('socket.io')
     var io = io.listen(server);
     io.on('connection', function (socket) {
         log.info("---------socket.io on connection with userId:", socket.userID);
