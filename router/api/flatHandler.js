@@ -327,4 +327,80 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
         })
     }
 })
+
+
+router.post('/getFlatByID', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const Auth = req.user;
+    const employeeID = Auth.id;
+    let { flatID } = req.body;
+    console.log(flatID)
+    try {
+        let employee = await Employee.findById(employeeID);
+        if (!employee) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        }
+        employee = employee.toJSON();
+        let building = await Building.findById(employee.buildingID);
+        if (!building) {
+            return res.status(400).json({
+                msg: 'Ban khong thuoc pham vi toa nha nao',
+                status: 1
+            })
+        }
+        let flat = await Flat.aggregate([
+            {
+                $match: { // filter only those posts in september
+                    $and: [
+                        { status: { $in: [1, 2] } }
+                    ]
+                },
+            },
+
+
+            {
+                $lookup:
+                {
+                    from: "buildings",
+                    localField: "buildingID",
+                    foreignField: "_id",
+                    as: "building_info"
+                }
+            },
+
+            {
+                $lookup:
+                {
+                    from: 'users',
+                    localField: "_id",
+                    foreignField: "flatID",
+                    as: "listUser"
+                }
+            },
+
+        ])
+        flat = flat.filter(x => x._id == flatID);
+        if (flat.length) {
+            flat.forEach(e => {
+                if (e.employee_info) {
+                    e.employee_info.forEach(el => {
+                        delete el.password;
+                    })
+                }
+            })
+        }
+        return res.status(200).json({
+            staus: 0,
+            data: flat
+        })
+    } catch (err) {
+        return res.status(500).json({
+            msg: 'Co loi xay ra, vui long thu lai sau',
+            status: -1,
+        })
+    }
+})
+
 module.exports = router;

@@ -95,6 +95,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
 
 router.post('/login', async (req, res, next) => {
     let { phone, password } = req.body;
+    console.log(phone,password);
     Employee.findOne({ phone: phone })
         .then(employee => {
             console.log("vao day");
