@@ -3,7 +3,7 @@ const morgan = require('morgan');
 const path = require('path');
 const passport = require('passport');
 const bodyParser = require('body-parser');
-
+var cors = require('cors')
 const app = express();
 
 const fileRoutes = require("./router/api/uploadFile");
@@ -29,18 +29,25 @@ app.use(passport.initialize());
 // Passport Config
 require('./middleware/passport')(passport);
 // Handling CORS Errors
-app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header(
-        'Access-Control-Allow-Headers',
-        'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-    );
-    if (req.method === 'OPTIONS') {
-        res.header('Access-Control-Allow-Methods', 'PUT POST PATCH GET DELETE');
-        return res.status(200).json({});
-    }
+// app.use((req, res, next) => {
+//     res.header('Access-Control-Allow-Origin', '*');
+//     res.header(
+//         'Access-Control-Allow-Headers',
+//         'Origin, X-Requested-With, Content-Type, Accept, Authorization'
+//     );
+//     if (req.method === 'OPTIONS') {
+//         res.header('Access-Control-Allow-Methods', 'PUT POST PATCH GET DELETE');
+//         return res.status(200).json({});
+//     }
+//     next();
+// });
+app.use(cors())
+app.use(function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
 });
+
 
 app.use("/api/v1/", fileRoutes);
 app.use('/api/employee', employeeRouter);
