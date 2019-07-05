@@ -89,7 +89,8 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
 router.post('/createMulti', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const Auth = req.user;
     const employeeID = Auth.id;
-    let flatsDto = req.body;
+    let {flatsDto} = req.body;
+    console.log(flatsDto);
     try {
         let employee = await Employee.findById(employeeID);
         if (!employee) {
@@ -352,7 +353,7 @@ router.post('/getFlatByID', passport.authenticate('jwt', { session: false }), as
         }
         let flat = await Flat.aggregate([
             {
-                $match: { // filter only those posts in september
+                $match: { 
                     $and: [
                         { status: { $in: [1, 2] } }
                     ]
