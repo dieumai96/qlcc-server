@@ -207,10 +207,6 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
                 msg: 'Khong tim thay thong tin user'
             })
         }
-        // let getAllNotification = Notification.find({
-        //     status: { $in: [CONST.STATUS.WAIT_ACTIVE, CONST.STATUS.ACTIVE] },
-        //     buildingID: employee.buildingID,
-        // });
 
         let getAllNotification = await Notification.aggregate([
             {
@@ -246,10 +242,15 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
         ])
         for (let i = 0; i < getAllNotification.length; i++) {
             getAllNotification[i].totalCount = 0;
+            let flatDistinct = [];
             getAllNotification[i].events_docs.forEach(e => {
                 if (e.type == 'EventUser') {
+                    if (!flatDistinct.includes(e.userFlatID)) {
+                        flatDistinct.push(e.userFlatID);
+                    }
                     getAllNotification[i].totalCount++;
                 }
+                getAllNotification[i].flatDistinct = flatDistinct
             })
         }
         return res.status(200).json({
@@ -263,15 +264,4 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
 })
 
 
-// router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { session: false }), async (req, res) => {
-//     try{
-//         await Notification.remove();
-//         return res.status(200).json({
-//             msg : 'ok'
-//         })
-//     }catch(Err){
-
-//     }
-
-// })
 module.exports = router;

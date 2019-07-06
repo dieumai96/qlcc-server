@@ -89,7 +89,8 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
 router.post('/createMulti', passport.authenticate('jwt', { session: false }), async (req, res) => {
     const Auth = req.user;
     const employeeID = Auth.id;
-    let flatsDto = req.body;
+    let { flatsDto } = req.body;
+    console.log(flatsDto);
     try {
         let employee = await Employee.findById(employeeID);
         if (!employee) {
@@ -352,7 +353,7 @@ router.post('/getFlatByID', passport.authenticate('jwt', { session: false }), as
         }
         let flat = await Flat.aggregate([
             {
-                $match: { // filter only those posts in september
+                $match: {
                     $and: [
                         { status: { $in: [1, 2] } }
                     ]
@@ -403,4 +404,46 @@ router.post('/getFlatByID', passport.authenticate('jwt', { session: false }), as
     }
 })
 
+
+router.post('/deleteFlat', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const Auth = req.user;
+    const employeeID = Auth.id;
+    let { flatID } = req.body;
+    try {
+        let employee = await Employee.findById(employeeID);
+        if (!employee) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        }
+        employee = employee.toJSON();
+        let building = await Building.findById(employee.buildingID);
+        if (!building) {
+            return res.status(400).json({
+                msg: 'Ban khong thuoc pham vi toa nha nao',
+                status: 1
+            })
+        }
+        let flat = await Flat.findById(flatID);
+        if (flat) {
+            await Flat.findOneAndRemove({ "_id": flatID })
+            return res.status(200).json({
+                status: 0,
+                msg: 'Xoa can ho thanh cong',
+            })
+        } else {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin can ho',
+            })
+        }
+
+    } catch (err) {
+        return res.status(500).json({
+            msg: 'Co loi xay ra, vui long thu lai sau',
+            status: -1,
+        })
+    }
+})
 module.exports = router;
