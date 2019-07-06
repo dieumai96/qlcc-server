@@ -242,10 +242,15 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
         ])
         for (let i = 0; i < getAllNotification.length; i++) {
             getAllNotification[i].totalCount = 0;
+            let flatDistinct = [];
             getAllNotification[i].events_docs.forEach(e => {
                 if (e.type == 'EventUser') {
+                    if (!flatDistinct.includes(e.userFlatID)) {
+                        flatDistinct.push(e.userFlatID);
+                    }
                     getAllNotification[i].totalCount++;
                 }
+                getAllNotification[i].flatDistinct = flatDistinct
             })
         }
         return res.status(200).json({
