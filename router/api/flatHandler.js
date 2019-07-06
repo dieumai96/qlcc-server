@@ -392,7 +392,7 @@ router.post('/getFlatByID', passport.authenticate('jwt', { session: false }), as
             })
         }
         return res.status(200).json({
-            staus: 0,
+            status: 0,
             data: flat
         })
     } catch (err) {
