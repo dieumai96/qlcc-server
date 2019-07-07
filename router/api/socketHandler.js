@@ -1,12 +1,12 @@
 
 const log = require('./../../lib/logUtil');
+const portSocket = process.env.PORT || 5000;
+const io = require('socket.io')(portSocket);
 var SocketHandler = {};
 
 var online_users = {};
 
-SocketHandler.init = function (server) {
-    var io = require('socket.io')
-    var io = io.listen(server);
+SocketHandler.init = function () {
     io.on('connection', function (socket) {
         log.info("---------socket.io on connection with userId:", socket.userID);
         log.info("---------socket.io on connection with sessionID:", socket.sessionID);
@@ -20,7 +20,6 @@ SocketHandler.init = function (server) {
             }
         }
         socket.emit('check user reconnect');
-        // creating new user if nickname doesn't exists
         socket.on('new-user', function (data, callback) {
             log.info("=============================new-user===============data: ", data);
             log.info("===========sessionId chuan bi them: ", data.sessionID);
@@ -52,8 +51,9 @@ SocketHandler.init = function (server) {
                     }
                 }
             }
-        });
+        })
     })
+
 }
 
 module.exports = SocketHandler;
