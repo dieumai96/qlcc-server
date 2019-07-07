@@ -227,14 +227,7 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
                     as: "events_docs",
                 }
             },
-            {
-                $lookup: {
-                    from: "flats",
-                    as: "tb3",
-                    localField: "events_docs.userID",
-                    foreignField: "_id",
-                }
-            },
+
             {
                 $sort: {
                     "timeCreated": -1
@@ -255,6 +248,13 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
                     listFlatAlreadyReadNotification.push(item);
                     flatDistinct.push(e.userFlatID);
                 }
+                if (e.type == 'EventEmployee') {
+                    if (e.userID == employeeID && e.read) {
+                        getAllNotification[i].read = true;
+                    } else {
+                        getAllNotification[i].read = false;
+                    }
+                }
             })
             getAllNotification[i].flatDistinct = flatDistinct;
             getAllNotification[i].listFlatAlreadyReadNotification = listFlatAlreadyReadNotification;
@@ -274,7 +274,7 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
                 }
             })
             getAllNotification[i].totalRead = countRead;
-            delete getAllNotification[i].flatDistinct;
+            // delete getAllNotification[i].flatDistinct;
             delete getAllNotification[i].listFlatAlreadyReadNotification;
             delete getAllNotification[i].events_docs;
         }
@@ -282,7 +282,7 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
             msg: 'ok',
             data: getAllNotification
         })
-    } catch (Err) {
+    } catch (err) {
         return res.status(500).json({
             msg: 'Co loi xay ra',
             status: -1,
@@ -291,4 +291,107 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
 
 })
 
+
+router.post('/getNotificationEmployeeByID', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const Auth = req.user;
+    const employeeID = Auth.id;
+    const { notificationID } = req.body;
+    try {
+        let employee = await Employee.findById(employeeID);
+
+        if (!employee) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        } else {
+            let notification = await Notification.findById(notificationID);
+            if (notification) {
+                notification = notification.toJSON();
+                let eventUser = await EventUser.find({ parentNotificationID: notificationID, dataType: 'Notification' })
+                let listDistinctFlat = [];
+                let listFlat = [];
+                let listRead = [];
+                eventUser.forEach(e => {
+                    e = JSON.stringify(e);
+                    e = JSON.parse(e);
+                    if (e.type == 'EventUser') {
+                        if (!listDistinctFlat.includes(e.userFlatID)) {
+                            listDistinctFlat.push(e.userFlatID);
+                        }
+                        let item = {
+                            read: e.read,
+                            flatId: e.userFlatID
+                        }
+                        listRead.push(item);
+                        listFlat.push(e.userFlatID);
+                    }
+                })
+                notification.totalFlatCount = listDistinctFlat.length;
+                notification.listRead = _.uniqWith(listRead, _.isEqual);
+                notification.listFlat = _.uniqWith(listFlat, _.isEqual);
+                let totalFlatRead = 0;
+                notification.listRead.forEach(e => {
+                    if (e.read) {
+                        totalFlatRead++;
+                    }
+                })
+                notification.totalFlatRead = totalFlatRead;
+                notification.totalUnread = listDistinctFlat.length - totalFlatRead;
+
+                let queryAllFlat = await Flat.find({ _id: { $in: listFlat } });
+                queryAllFlat = _.uniqWith(queryAllFlat, _.isEqual);
+                let listFlatRead = [];
+                let listFlatUnRead = [];
+                listRead.forEach(e => {
+
+                    queryAllFlat.forEach(el => {
+                        el = JSON.stringify(el);
+                        el = JSON.parse(el);
+                        if (e.flatId == el._id && e.read) {
+                            listFlatRead.push(el)
+                        } else {
+                            listFlatUnRead.push(el)
+                        }
+                    })
+                })
+                listFlatRead = Array.from(new Set(listFlatRead.map(s => s._id)))
+                    .map(id => {
+                        return {
+                            id: id,
+                            block: listFlatRead.find(s => s._id == id).block,
+                            code: listFlatUnRead.find(s => s._id === id).code,
+                        }
+                    })
+                listFlatUnRead = Array.from(new Set(listFlatUnRead.map(s => s._id)))
+                    .map(id => {
+                        return {
+                            id: id,
+                            block: listFlatUnRead.find(s => s._id === id).block,
+                            soPhong: listFlatUnRead.find(s => s._id === id).soPhong,
+                            code: listFlatUnRead.find(s => s._id === id).code,
+                        }
+                    })
+                notification.listFlatRead = listFlatRead;
+                notification.listFlatUnRead = listFlatUnRead;
+                delete notification.listRead;
+                delete notification.listFlat;
+                return res.status(200).json({
+                    status: 0,
+                    data: notification
+                })
+            } else {
+                return res.status(400).json({
+                    status: 1,
+                    msg: 'Khong tim thay notification'
+                })
+            }
+        }
+    } catch (err) {
+        return res.status(500).json({
+            msg: 'Co loi xay ra',
+            status: -1,
+        })
+    }
+})
 module.exports = router;
