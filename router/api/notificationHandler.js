@@ -10,6 +10,7 @@ const logUtil = require('./../../lib/logUtil');
 const EventUser = require('./../../models/eventUser');
 const Rx = require('rxjs');
 const Operators = require('rxjs/operators');
+const _ = require('lodash');
 const router = express.Router();
 let flagCreateNotificationSuccessInitial = null;
 let flagCreateNotificationSuccess = new Rx.BehaviorSubject(flagCreateNotificationSuccessInitial);
@@ -241,27 +242,53 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
             }
         ])
         for (let i = 0; i < getAllNotification.length; i++) {
-            getAllNotification[i].totalCount = 0;
             let flatDistinct = [];
+            let listFlatAlreadyReadNotification = [];
             getAllNotification[i].events_docs.forEach(e => {
+                e = JSON.stringify(e);
+                e = JSON.parse(e);
                 if (e.type == 'EventUser') {
-                    if (!flatDistinct.includes(e.userFlatID)) {
-                        flatDistinct.push(e.userFlatID);
+                    let item = {
+                        read: e.read,
+                        flatId: e.userFlatID
                     }
-                    getAllNotification[i].totalCount++;
+                    listFlatAlreadyReadNotification.push(item);
+                    flatDistinct.push(e.userFlatID);
                 }
-                getAllNotification[i].flatDistinct = flatDistinct
             })
+            getAllNotification[i].flatDistinct = flatDistinct;
+            getAllNotification[i].listFlatAlreadyReadNotification = listFlatAlreadyReadNotification;
+        }
+        for (let i = 0; i < getAllNotification.length; i++) {
+            var uniqueFlat = getAllNotification[i].flatDistinct.filter((v, i, a) => a.indexOf(v) === i);
+            let a = getAllNotification[i].listFlatAlreadyReadNotification;
+            getAllNotification[i].flatDistinct = [...uniqueFlat];
+            getAllNotification[i].listFlatAlreadyReadNotification = _.uniqWith(a, _.isEqual);
+        }
+        for (let i = 0; i < getAllNotification.length; i++) {
+            let countRead = 0;
+            getAllNotification[i].totalFlat = getAllNotification[i].flatDistinct.length;
+            getAllNotification[i].listFlatAlreadyReadNotification.forEach(e => {
+                if (e.read) {
+                    countRead++;
+                }
+            })
+            getAllNotification[i].totalRead = countRead;
+            delete getAllNotification[i].flatDistinct;
+            delete getAllNotification[i].listFlatAlreadyReadNotification;
+            delete getAllNotification[i].events_docs;
         }
         return res.status(200).json({
             msg: 'ok',
             data: getAllNotification
         })
     } catch (Err) {
-
+        return res.status(500).json({
+            msg: 'Co loi xay ra',
+            status: -1,
+        })
     }
 
 })
-
 
 module.exports = router;
