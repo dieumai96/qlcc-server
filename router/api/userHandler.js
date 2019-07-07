@@ -93,7 +93,7 @@ router.post('/login', async (req, res) => {
                             delete user.password;
                             res.status(200).json({
                                 status: 0,
-                                token: 'Bearer ' + token,
+                                token: token,
                                 data: user
                             })
                         }

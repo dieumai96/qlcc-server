@@ -9,6 +9,7 @@ const utils = require('./../../config/utils');
 const logUtil = require('./../../lib/logUtil');
 const EventUser = require('./../../models/eventUser');
 const Rx = require('rxjs');
+const JWT = require('jwt-decode');
 const Operators = require('rxjs/operators');
 const _ = require('lodash');
 const router = express.Router();
@@ -394,4 +395,74 @@ router.post('/getNotificationEmployeeByID', passport.authenticate('jwt', { sessi
         })
     }
 })
+
+router.post('/getNotificationForUser', async (req, res) => {
+    const { token } = req.body;
+    try {
+        let decoded = JWT(token);
+        const userID = decoded.id;
+        let user = await User.findById(userID);
+        if (!user) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        } else {
+            user = user.toJSON();
+            let getAllNotification = await Notification.aggregate([
+                {
+                    $match: { // filter only those posts in september
+                        $and: [
+                            { buildingID: user.buildingID, },
+
+                        ]
+                    },
+
+                },
+                {
+                    $lookup: {
+                        from: "eventusers",
+                        localField: "_id",
+                        foreignField: "parentNotificationID",
+                        as: "events_docs",
+                    }
+                },
+
+                {
+                    $sort: {
+                        "timeCreated": -1
+                    }
+                }
+            ])
+            getAllNotification.forEach(e => {
+                let listRead = [];
+                e.events_docs.forEach(el => {
+                    el = JSON.stringify(el);
+                    el = JSON.parse(el);
+                    if (el.type == 'EventUser' && el.read) {
+                        listRead.push(el.userFlatID)
+                    }
+                })
+                listRead = _.uniqWith(listRead, _.isEqual);
+                if (listRead.includes(user.flatID.toString())) {
+                    e.read = true
+                } else {
+                    e.read = false;
+                }
+                delete e.events_docs;
+            })
+            return res.status(200).json({
+                msg: 'Lay danh sach thong bao thanh cong',
+                data: getAllNotification,
+                status: 0
+            })
+        }
+    } catch (err) {
+        return res.status(500).json({
+            msg: 'Co loi xay ra',
+            status: -1,
+        })
+    }
+})
+
 module.exports = router;
