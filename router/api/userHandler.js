@@ -90,6 +90,7 @@ router.post('/login', async (req, res) => {
                             expiresIn: (Math.floor(new Date().getTime() / 1000) + (7 * 24 * 60 * 60)) * 1000
                         },
                         (err, token) => {
+                            delete user.password;
                             res.status(200).json({
                                 status: 0,
                                 token: 'Bearer ' + token,

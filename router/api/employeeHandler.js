@@ -95,7 +95,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
 
 router.post('/login', async (req, res, next) => {
     let { phone, password } = req.body;
-    console.log(phone,password);
+    console.log(phone, password);
     Employee.findOne({ phone: phone })
         .then(employee => {
             console.log("vao day");
@@ -130,6 +130,7 @@ router.post('/login', async (req, res, next) => {
                                 expiresIn: (Math.floor(new Date().getTime() / 1000) + (7 * 24 * 60 * 60)) * 1000
                             },
                             (err, token) => {
+                                delete employee.password;
                                 res.status(200).json({
                                     status: 0,
                                     token: 'Bearer ' + token,
