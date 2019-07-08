@@ -23,11 +23,18 @@ internals.SCOPE_NOTIFICATION = {
 }
 
 internals.DATA_TYPE = {
-    NOTIFICATION : 'Notification',
+    NOTIFICATION: 'Notification',
+    EVENT_USER: 'EventUser',
+    EVENT_EMPLOYEE: 'EventEmployee',
 }
 
 internals.ROLES = {
     ADMIN: 'ADMIN',
     RCN: 'RCN',
+}
+
+internals.NOTIFY_STATUS = {
+    SEND: 2,
+    NOT_SEND: 1,
 }
 module.exports = internals;
