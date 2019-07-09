@@ -30,6 +30,10 @@ var notificationSchema = new Schema({
         type: Date,
         default: Date.now,
     },
+    status: {
+        type: Number,
+        required : true,
+    }
 })
 
 module.exports = mongoose.model("notifications", notificationSchema);

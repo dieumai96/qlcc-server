@@ -13,11 +13,9 @@ const JWT = require('jwt-decode');
 const Operators = require('rxjs/operators');
 const _ = require('lodash');
 const router = express.Router();
-let flagCreateNotificationSuccessInitial = null;
-let flagCreateNotificationSuccess = new Rx.BehaviorSubject(flagCreateNotificationSuccessInitial);
-let flagCreateNotificationSuccess$ = flagCreateNotificationSuccess.asObservable();
 
-async function pushNotification(notificationDto, employeeID, buildingID) {
+
+async function pushNotification(notificationDto, employeeID, buildingID, dmlType) {
     let listEventUseID = [];
     let listEventEmployeeID = [];
     let queryEmployee = await Employee.find({
@@ -31,93 +29,96 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
             type: 'EventEmployee'
         });
     })
-    if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.ALL) {
-        let query = await User.aggregate([
-            {
-                $match: { // filter only those posts in september
-                    $and: [
-                        { buildingID: buildingID },
-                        { status: { $in: [1, 2] } },
-                    ]
-                },
-
-            },
-            {
-                $lookup:
+    if (notificationDto.notifyScope) {
+        if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.ALL) {
+            let query = await User.aggregate([
                 {
-                    from: "flats",
-                    localField: "flatID",
-                    foreignField: "_id",
-                    as: "flat_info"
-                },
-            },
-        ])
+                    $match: { // filter only those posts in september
+                        $and: [
+                            { buildingID: buildingID },
+                            { status: { $in: [1, 2] } },
+                        ]
+                    },
 
-        query.forEach(e => {
-            listEventUseID.push({
-                id: e._id,
-                userFlatID: e.flatID,
-                type: 'EventUser'
-            });
-        })
-    }
-    if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.BUILDING) {
-        let listBuilding = notificationDto.notifyScope.refs;
-        logUtil.error(listBuilding);
-        let query = await User.aggregate([
-            {
-                $match: { // filter only those posts in september
-                    $and: [
-                        { buildingID: buildingID },
-                        { status: { $in: [1, 2] } },
-                    ]
                 },
-
-            },
-            {
-                $lookup:
                 {
-                    from: "flats",
-                    localField: "flatID",
-                    foreignField: "_id",
-                    as: "flat_info"
+                    $lookup:
+                    {
+                        from: "flats",
+                        localField: "flatID",
+                        foreignField: "_id",
+                        as: "flat_info"
+                    },
                 },
+            ])
 
-            },
-        ])
-        query.forEach(e => {
-            if (e.flat_info.length) {
-                if (listBuilding.includes(e.flat_info[0].block)) {
-                    listEventUseID.push({
-                        id: e._id,
-                        userFlatID: e.flatID,
-                        type: 'EventUser'
-                    });
+            query.forEach(e => {
+                listEventUseID.push({
+                    id: e._id,
+                    userFlatID: e.flatID,
+                    type: 'EventUser'
+                });
+            })
+        }
+        if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.BUILDING) {
+            let listBuilding = notificationDto.notifyScope.refs;
+            logUtil.error(listBuilding);
+            let query = await User.aggregate([
+                {
+                    $match: { // filter only those posts in september
+                        $and: [
+                            { buildingID: buildingID },
+                            { status: { $in: [1, 2] } },
+                        ]
+                    },
+
+                },
+                {
+                    $lookup:
+                    {
+                        from: "flats",
+                        localField: "flatID",
+                        foreignField: "_id",
+                        as: "flat_info"
+                    },
+
+                },
+            ])
+            query.forEach(e => {
+                if (e.flat_info.length) {
+                    if (listBuilding.includes(e.flat_info[0].block)) {
+                        listEventUseID.push({
+                            id: e._id,
+                            userFlatID: e.flatID,
+                            type: 'EventUser'
+                        });
+                    }
                 }
-            }
-        })
+            })
 
+        }
+        if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.FLAT) {
+            let flatScope = notificationDto.notifyScope.refs;
+            let flatList = await Flat.find({ _id: { $in: flatScope } });
+            let listIDFlat = [];
+            flatList.forEach(e => {
+                listIDFlat.push(e._id);
+            })
+            let query = await User.find({
+                buildingID: buildingID,
+                status: { $in: [1, 2] },
+                flatID: { $in: listIDFlat },
+            })
+            query.forEach(e => {
+                listEventUseID.push({
+                    id: e._id,
+                    userFlatID: e.flatID,
+                    type: 'EventUser'
+                });
+            })
+        }
     }
-    if (notificationDto.notifyScope.type == CONST.SCOPE_NOTIFICATION.FLAT) {
-        let flatScope = notificationDto.notifyScope.refs;
-        let flatList = await Flat.find({ _id: { $in: flatScope } });
-        let listIDFlat = [];
-        flatList.forEach(e => {
-            listIDFlat.push(e._id);
-        })
-        let query = await User.find({
-            buildingID: buildingID,
-            status: { $in: [1, 2] },
-            flatID: { $in: listIDFlat },
-        })
-        query.forEach(e => {
-            listEventUseID.push({
-                id: e._id,
-                userFlatID: e.flatID,
-                type: 'EventUser'
-            });
-        })
-    }
+
     let listUserID = [...listEventUseID, ...listEventEmployeeID];
     let rxjsListUserID = Rx.from(listUserID);
     let countInsert = 0;
@@ -133,6 +134,7 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
                 userFlatID: res.userFlatID,
                 parentNotificationID: notificationDto.id,
                 createdBy: employeeID,
+                dmlType,
                 dataType: CONST.DATA_TYPE.NOTIFICATION,
             }
             let newEvent = new EventUser(newItem);
@@ -141,9 +143,6 @@ async function pushNotification(notificationDto, employeeID, buildingID) {
         })
     ).subscribe(_ => {
         countInsert++;
-        if (countInsert == listUserID.length) {
-            flagCreateNotificationSuccess.next(true);
-        }
     })
     logUtil.error(listUserID);
 
@@ -179,7 +178,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
         newNotification.save()
             .then(async notification => {
                 body.id = notification._id;
-                await pushNotification(body, employeeID, employee.buildingID);
+                await pushNotification(body, employeeID, employee.buildingID, CONST.DML_TYPE.INSERT);
                 return res.status(200).json({
                     msg: 'Tao thong bao thanh cong',
                     status: 0,
@@ -212,7 +211,7 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
 
         let getAllNotification = await Notification.aggregate([
             {
-                $match: { // filter only those posts in september
+                $match: {
                     $and: [
                         { buildingID: employee.buildingID, },
 
@@ -238,6 +237,7 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
         for (let i = 0; i < getAllNotification.length; i++) {
             let flatDistinct = [];
             let listFlatAlreadyReadNotification = [];
+            let read = false;
             getAllNotification[i].events_docs.forEach(e => {
                 e = JSON.stringify(e);
                 e = JSON.parse(e);
@@ -251,12 +251,11 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
                 }
                 if (e.type == 'EventEmployee') {
                     if (e.userID == employeeID && e.read) {
-                        getAllNotification[i].read = true;
-                    } else {
-                        getAllNotification[i].read = false;
+                        read = true;
                     }
                 }
             })
+            getAllNotification[i].read = read;
             getAllNotification[i].flatDistinct = flatDistinct;
             getAllNotification[i].listFlatAlreadyReadNotification = listFlatAlreadyReadNotification;
         }
@@ -313,7 +312,7 @@ router.post('/getNotificationEmployeeByID', passport.authenticate('jwt', { sessi
                 let listDistinctFlat = [];
                 let listFlat = [];
                 let listRead = [];
-                eventUser.forEach(e => {
+                eventUser.forEach(async e => {
                     e = JSON.stringify(e);
                     e = JSON.parse(e);
                     if (e.type == 'EventUser') {
@@ -326,7 +325,24 @@ router.post('/getNotificationEmployeeByID', passport.authenticate('jwt', { sessi
                         }
                         listRead.push(item);
                         listFlat.push(e.userFlatID);
+
+                    } else {
+                        if (e.userID == employeeID) {
+                            console.log("Update event Here");
+                            e.read = true;
+                            let updateEventEmployee = await EventUser.updateOne({ _id: e._id }, {
+                                $set: e
+                            }, function (err, res1) {
+                                if (err) {
+                                    return res.status(400).json({
+                                        status: 1,
+                                        msg: 'Co loi xay ra, vui long thu lai sau',
+                                    })
+                                }
+                            })
+                        }
                     }
+
                 })
                 notification.totalFlatCount = listDistinctFlat.length;
                 notification.listRead = _.uniqWith(listRead, _.isEqual);
@@ -459,10 +475,140 @@ router.post('/getNotificationForUser', async (req, res) => {
         }
     } catch (err) {
         return res.status(500).json({
+            msg: 'Co loi xay ra 222',
+            status: -1,
+            err: err,
+        })
+    }
+})
+
+
+
+router.post('/getNotificationUserByID', async (req, res) => {
+    const { token, notificationID } = req.body;
+    try {
+        let decoded = JWT(token);
+        const userID = decoded.id;
+        let user = await User.findById(userID);
+        if (!user) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        } else {
+            user = user.toJSON();
+            let notification = await Notification.findById(notificationID);
+            if (notification) {
+                let conditionFindEvent = {
+                    parentNotificationID: notificationID,
+                    userID: userID,
+                }
+                let eventUser = await EventUser.find(conditionFindEvent);
+                eventUser.forEach(async e => {
+                    e.read = true;
+                    let updateEventUser = await EventUser.updateOne({ _id: e._id }, {
+                        $set: e
+                    }, function (err, res1) {
+                        if (err) {
+                            return res.status(400).json({
+                                status: 1,
+                                msg: 'Co loi xay ra, vui long thu lai sau',
+                            })
+                        }
+                        return res.status(200).json({
+                            status: 0,
+                            data: notification
+                        })
+                    })
+                })
+            } else {
+                return res.status(400).json({
+                    status: 1,
+                    msg: 'Khong tim thay thong tin notification'
+                })
+            }
+
+        }
+    } catch (err) {
+        return res.status(500).json({
             msg: 'Co loi xay ra',
             status: -1,
         })
     }
 })
+
+
+
+router.post('/update', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const Auth = req.user;
+    const employeeID = Auth.id;
+    let { title, content, priority, file, notifyScope, status, notificationID } = req.body;
+    try {
+        let employee = await Employee.findById(employeeID);
+        if (!employee) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        } else {
+            logUtil.error("EMPLOYEE=======>", employee)
+            if (!(employee.roles.includes(CONST.ROLES.ADMIN) || employee.includes(CONST.ROLES.RCN))) {
+                logUtil.error("BUG HERE", employee)
+
+                return res.status(400).json({
+                    status: 1,
+                    msg: 'Ban khong co quyen thuc hien thao tac nay',
+                })
+            } else {
+                let notification = await Notification.findById(notificationID);
+                if (notification) {
+                    logUtil.error("notification=======>", notification)
+                    if (notification.status == CONST.NOTIFY_STATUS.SEND) {
+                        return res.status(400).json({
+                            status: 1,
+                            msg: 'Thông báo đã gửi đi, không được sửa đổi !',
+                        })
+                    } else {
+                        notification.title = title ? title : notification.title;
+                        notification.content = content ? content : notification.content;
+                        notification.priority = priority ? priority : notification.priority;
+                        notification.file = file ? file : notification.file;
+                        notification.notifyScope = notifyScope ? notifyScope : notification.notifyScope;
+                        notification.status = status ? status : notification.status;
+                        let saveNotification = await Notification.updateOne({ _id: notificationID }, {
+                            $set: notification
+                        }, async function (err, res1) {
+                            if (err) {
+                                return res.status(400).json({
+                                    status: 1,
+                                    msg: 'Co loi xay ra, vui long thu lai sau',
+                                })
+                            }
+                            notification.id = notification._id;
+                            await pushNotification(notification, employeeID, employee.buildingID, CONST.DML_TYPE.UPDATE);
+                            return res.status(200).json({
+                                msg: 'Sửa thông báo thành công',
+                                status: 0,
+                            })
+                        })
+                    }
+                } else {
+                    return res.status(400).json({
+                        status: 1,
+                        msg: 'Khong tim thay thong bao nay!',
+                    })
+                }
+            }
+        }
+    } catch (err) {
+        return res.status(500).json({
+            msg: 'Co loi xay ra',
+            status: -1,
+            err: err,
+        })
+    }
+})
+
+
 
 module.exports = router;
