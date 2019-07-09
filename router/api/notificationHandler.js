@@ -143,9 +143,6 @@ async function pushNotification(notificationDto, employeeID, buildingID, dmlType
         })
     ).subscribe(_ => {
         countInsert++;
-        if (countInsert == listUserID.length) {
-            flagCreateNotificationSuccess.next(true);
-        }
     })
     logUtil.error(listUserID);
 
@@ -240,6 +237,7 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
         for (let i = 0; i < getAllNotification.length; i++) {
             let flatDistinct = [];
             let listFlatAlreadyReadNotification = [];
+            let read = false;
             getAllNotification[i].events_docs.forEach(e => {
                 e = JSON.stringify(e);
                 e = JSON.parse(e);
@@ -253,12 +251,11 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
                 }
                 if (e.type == 'EventEmployee') {
                     if (e.userID == employeeID && e.read) {
-                        getAllNotification[i].read = true;
-                    } else {
-                        getAllNotification[i].read = false;
+                        read = true;
                     }
                 }
             })
+            getAllNotification[i].read = read;
             getAllNotification[i].flatDistinct = flatDistinct;
             getAllNotification[i].listFlatAlreadyReadNotification = listFlatAlreadyReadNotification;
         }
@@ -554,15 +551,18 @@ router.post('/update', passport.authenticate('jwt', { session: false }), async (
                 msg: 'Khong tim thay thong tin user'
             })
         } else {
+            logUtil.error("EMPLOYEE=======>", employee)
             if (!(employee.roles.includes(CONST.ROLES.ADMIN) || employee.includes(CONST.ROLES.RCN))) {
+                logUtil.error("BUG HERE", employee)
+
                 return res.status(400).json({
                     status: 1,
                     msg: 'Ban khong co quyen thuc hien thao tac nay',
                 })
             } else {
-                let notification = await Notification.findById(id);
+                let notification = await Notification.findById(notificationID);
                 if (notification) {
-                    logUtil.error("notification=======>",notification)
+                    logUtil.error("notification=======>", notification)
                     if (notification.status == CONST.NOTIFY_STATUS.SEND) {
                         return res.status(400).json({
                             status: 1,
@@ -604,7 +604,7 @@ router.post('/update', passport.authenticate('jwt', { session: false }), async (
         return res.status(500).json({
             msg: 'Co loi xay ra',
             status: -1,
-            err : err,
+            err: err,
         })
     }
 })

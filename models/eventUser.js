@@ -30,6 +30,9 @@ var eventUserSchema = new Schema({
     type: {
         type: String,
 
+    },
+    dmlType: {
+        type: String
     }
 
 })
