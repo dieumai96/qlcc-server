@@ -1,10 +1,9 @@
 const http = require('http');
 const mongoose = require('mongoose');
 const app = require('./app');
+const log = require('./lib/logUtil');
+const socket = require('./router/api/socketHandler')
 const port = process.env.PORT || 3000;
-const server = http.createServer(app);
-const socket = require('./router/api/socketHandler');
-// Connecting to mongodb
 
 // async function init() {
 //     try {
@@ -30,5 +29,6 @@ mongoose.connect(`mongodb://localhost/qlcc-server`)
 .catch(err => console.log(err));
 // socket.init('http://localhost'); 
 app.listen(port, () => {
+    socket.init();
     console.log(`Server in running in port ${port}`);
 })
