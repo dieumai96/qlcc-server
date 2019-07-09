@@ -22,6 +22,11 @@ internals.SCOPE_NOTIFICATION = {
     FLAT: 3,
 }
 
+internals.DML_TYPE = {
+    INSERT: 'Insert',
+    UPDATE: 'Update',
+}
+
 internals.DATA_TYPE = {
     NOTIFICATION: 'Notification',
     EVENT_USER: 'EventUser',
