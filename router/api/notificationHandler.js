@@ -13,9 +13,7 @@ const JWT = require('jwt-decode');
 const Operators = require('rxjs/operators');
 const _ = require('lodash');
 const router = express.Router();
-let flagCreateNotificationSuccessInitial = null;
-let flagCreateNotificationSuccess = new Rx.BehaviorSubject(flagCreateNotificationSuccessInitial);
-let flagCreateNotificationSuccess$ = flagCreateNotificationSuccess.asObservable();
+
 
 async function pushNotification(notificationDto, employeeID, buildingID) {
     let listEventUseID = [];
@@ -212,7 +210,7 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
 
         let getAllNotification = await Notification.aggregate([
             {
-                $match: { // filter only those posts in september
+                $match: {
                     $and: [
                         { buildingID: employee.buildingID, },
 
@@ -313,7 +311,7 @@ router.post('/getNotificationEmployeeByID', passport.authenticate('jwt', { sessi
                 let listDistinctFlat = [];
                 let listFlat = [];
                 let listRead = [];
-                eventUser.forEach(e => {
+                eventUser.forEach(async e => {
                     e = JSON.stringify(e);
                     e = JSON.parse(e);
                     if (e.type == 'EventUser') {
@@ -326,7 +324,24 @@ router.post('/getNotificationEmployeeByID', passport.authenticate('jwt', { sessi
                         }
                         listRead.push(item);
                         listFlat.push(e.userFlatID);
+
+                    } else {
+                        if (e.userID == employeeID) {
+                            console.log("Update event Here");
+                            e.read = true;
+                            let updateEventEmployee = await EventUser.updateOne({ _id: e._id }, {
+                                $set: e
+                            }, function (err, res1) {
+                                if (err) {
+                                    return res.status(400).json({
+                                        status: 1,
+                                        msg: 'Co loi xay ra, vui long thu lai sau',
+                                    })
+                                }
+                            })
+                        }
                     }
+
                 })
                 notification.totalFlatCount = listDistinctFlat.length;
                 notification.listRead = _.uniqWith(listRead, _.isEqual);
@@ -459,10 +474,69 @@ router.post('/getNotificationForUser', async (req, res) => {
         }
     } catch (err) {
         return res.status(500).json({
+            msg: 'Co loi xay ra 222',
+            status: -1,
+            err : err,
+        })
+    }
+})
+
+
+
+router.post('/getNotificationUserByID', async (req, res) => {
+    const { token, notificationID } = req.body;
+    try {
+        let decoded = JWT(token);
+        const userID = decoded.id;
+        let user = await User.findById(userID);
+        if (!user) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        } else {
+            user = user.toJSON();
+            let notification = await Notification.findById(notificationID);
+            if (notification) {
+                let conditionFindEvent = {
+                    parentNotificationID: notificationID,
+                    userID: userID,
+                }
+                let eventUser = await EventUser.find(conditionFindEvent);
+                eventUser.forEach(async e => {
+                    e.read = true;
+                    let updateEventUser = await EventUser.updateOne({ _id: e._id }, {
+                        $set: e
+                    }, function (err, res1) {
+                        if (err) {
+                            return res.status(400).json({
+                                status: 1,
+                                msg: 'Co loi xay ra, vui long thu lai sau',
+                            })
+                        }
+                        return res.status(200).json({
+                            status: 0,
+                            data: notification
+                        })
+                    })
+                })
+            } else {
+                return res.status(400).json({
+                    status: 1,
+                    msg: 'Khong tim thay thong tin notification'
+                })
+            }
+
+        }
+    } catch (err) {
+        return res.status(500).json({
             msg: 'Co loi xay ra',
             status: -1,
         })
     }
 })
+
+
+
 
 module.exports = router;

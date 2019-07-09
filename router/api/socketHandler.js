@@ -14,8 +14,7 @@ var SocketHandler = {};
 var online_users = {};
 
 function sendMsgBySql(listAccountID, data, eventName, sessionID) {
-    // commonService.getDocument(sql)
-    //     .then(res => {
+  
     let async = require("async");
     log.info("=========== listAccountID: ", listAccountID);
     for (let i = 0, keys = Object.keys(online_users), ii = keys.length; i < ii; i++) {
