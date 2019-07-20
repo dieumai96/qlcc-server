@@ -8,7 +8,7 @@ const logUtils = require('./../../lib/logUtil')
 const Roles = require('./../../models/roleSchema');
 const router = express.Router();
 
-router.post('/create', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+router.post('/create', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
     const Auth = req.user;
     const employeeID = Auth.id;
     let { code, name, description } = req.body;
@@ -28,7 +28,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
                 })
             } else {
                 let body = {
-                    code,
+                    code: code.toUpperCase(),
                     name,
                     description,
                     buidingID: employee.buidingID,

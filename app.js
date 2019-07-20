@@ -14,7 +14,7 @@ const userRouter = require('./router/api/userHandler');
 const notificationRouter = require('./router/api/notificationHandler');
 const rolesRouter = require('./router/api/rolesHandler');
 const socket = require('./router/api/socketHandler');
-const passportSetup = require('./middleware/passport-google-oauth20');
+// const passportSetup = require('./middleware/passport-google-oauth20');
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
