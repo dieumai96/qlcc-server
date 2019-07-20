@@ -1,3 +1,5 @@
+const JWT = require('jwt-decode');
+
 const internal = {
 
 }
@@ -32,6 +34,15 @@ internal.genCode = (length) => {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result.toUpperCase();
+}
+
+internal.checkTokenExpired = (token) => {
+    const decoded = JWT(token);
+    const currentTime = Date.now() / 1000;
+    if (decoded.exp < currentTime) {
+        return false;
+    }
+    return true;
 }
 
 module.exports = internal;
