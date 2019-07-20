@@ -13,6 +13,7 @@ const flatRouter = require('./router/api/flatHandler');
 const userRouter = require('./router/api/userHandler');
 const notificationRouter = require('./router/api/notificationHandler');
 const socket = require('./router/api/socketHandler');
+const passportSetup = require('./middleware/passport-google-oauth20');
 // parse application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: false }))
 // parse application/json
