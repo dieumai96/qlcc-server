@@ -42,4 +42,8 @@ internals.NOTIFY_STATUS = {
     SEND: 2,
     NOT_SEND: 1,
 }
+
+internals.MESSAGE = {
+    PERMISION : 'Bạn không có quyền thực hiện thao tác này'
+}
 module.exports = internals;

@@ -12,6 +12,7 @@ const buildingRouter = require('./router/api/buildingHandler');
 const flatRouter = require('./router/api/flatHandler');
 const userRouter = require('./router/api/userHandler');
 const notificationRouter = require('./router/api/notificationHandler');
+const rolesRouter = require('./router/api/rolesHandler');
 const socket = require('./router/api/socketHandler');
 const passportSetup = require('./middleware/passport-google-oauth20');
 // parse application/x-www-form-urlencoded
@@ -29,7 +30,7 @@ app.use(passport.initialize());
 // Passport Config
 require('./middleware/passport')(passport);
 app.use(cors())
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     next();
@@ -53,6 +54,7 @@ app.use('/api/building', buildingRouter);
 app.use('/api/flat', flatRouter);
 app.use('/api/user', userRouter);
 app.use('/api/notification', notificationRouter);
+app.use('/api/roles', rolesRouter);
 // Use mongoose promise library
 
 module.exports = app;
