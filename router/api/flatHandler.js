@@ -71,7 +71,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
                     status: constant.STATUS.ACTIVE
                 })
                 let newFlat = await flatDto.save();
-                return res.status(400).json({
+                return res.status(200).json({
                     msg: 'Them moi can ho thanh cong',
                     status: 0,
                     data: newFlat,
@@ -177,28 +177,28 @@ router.post('/edit', passport.authenticate('jwt', { session: false }), async (re
     try {
         let employee = await Employee.findById(employeeID);
         if (!employee) {
-            return res.status(400).json({
+            return res.status(200).json({
                 status: 1,
                 msg: 'Khong tim thay thong tin user'
             })
         }
         employee = employee.toJSON();
         if (!employee.roles.includes("ADMIN")) {
-            return res.status(400).json({
+            return res.status(200).json({
                 status: 1,
                 msg: 'Ban khong co quyen thuc hien thao tac nay'
             })
         }
         let building = await Building.findById(employee.buildingID);
         if (!building) {
-            return res.status(400).json({
+            return res.status(200).json({
                 msg: 'Ban khong thuoc pham vi toa nha nao',
                 status: 1
             })
         }
         let flat = await Flat.findById(flatID);
         if (!flat) {
-            return res.status(400).json({
+            return res.status(200).json({
                 msg: 'Khong tim thay can ho',
                 status: 1
             })
@@ -215,14 +215,14 @@ router.post('/edit', passport.authenticate('jwt', { session: false }), async (re
             let findFlat = await Flat.find(conditionExistsFlat);
 
             if (findFlat.length) {
-                return res.status(400).json({
+                return res.status(200).json({
                     msg: 'Thong tin can ho nay da ton tai roi',
                     status: 1,
                 })
             } else {
                 Flat.updateOne({ _id: flatID }, { $set: flat }, function (err, res1) {
                     if (err) {
-                        return res.status(400).json({
+                        return res.status(200).json({
                             status: 1,
                             msg: err,
                         })
@@ -393,7 +393,7 @@ router.post('/getFlatByID', passport.authenticate('jwt', { session: false }), as
             })
         }
         return res.status(200).json({
-            staus: 0,
+            status: 0,
             data: flat
         })
     } catch (err) {

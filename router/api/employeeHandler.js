@@ -7,6 +7,7 @@ const passport = require('passport');
 const CONST = require('./../../config/const');
 const Building = require('./../../models/buildingSchema');
 const utils = require('./../../config/utils');
+const logUtils = require('./../../lib/logUtil')
 const router = express.Router();
 
 router.post('/create', passport.authenticate('jwt', { session: false }), (req, res, next) => {
@@ -17,14 +18,14 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
     Employee.findById(id)
         .then(async employee => {
             if (!employee) {
-                return res.status(400).json({
+                return res.status(200).json({
                     status: 1,
                     msg: 'Khong tim thay nhan vien'
                 })
             }
             if (!(employee.roles.includes("ADMIN") || employee.roles.includes("ROOT"))) {
                 console.log(employee.roles.includes("ROOT"));
-                return res.status(400).json({
+                return res.status(200).json({
                     status: 1,
                     msg: 'Ban khong co quyen thuc hien thao tac nay'
                 })
@@ -49,7 +50,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
                 Employee.find({ phone: phone })
                     .then(exists => {
                         if (exists.length) {
-                            return res.status(400).json({
+                            return res.status(200).json({
                                 status: 1,
                                 msg: 'Nguoi dung nay da ton tai'
                             })
@@ -57,7 +58,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
                             let newEmployee = new Employee(payload);
                             bcrypt.genSalt(10, (err, salt) => {
                                 bcrypt.hash(newEmployee.password, salt, (err, hash) => {
-                                    if (err) throw err;
+                                    if (err) logUtils.error(err);
                                     newEmployee.password = hash;
                                     newEmployee
                                         .save()
@@ -78,7 +79,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
                         })
                     })
             } else {
-                return res.status(400).json({
+                return res.status(200).json({
                     msg: 'Khong tim thay chung cu',
                     status: 1
                 })
@@ -180,6 +181,49 @@ router.post('/profile', passport.authenticate('jwt', { session: false }), async 
             msg: 'Lay thong tin nhan vien thanh cong',
             data: employee,
             status: 0
+        })
+    } catch (err) {
+        return res.status(500).json({
+            status: -1,
+            msg: 'Co loi xay ra, vui long thu lai sau'
+        })
+    }
+})
+
+
+
+router.post('/getAllEmployee', passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const Auth = req.user;
+    const employeeID = Auth.id;
+    try {
+        let employee = await Employee.findById(employeeID);
+        if (!employee) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        }
+        let conditionGet = {
+            buildingID : employee.buildingID,
+        }
+        let employees = await Employee.aggregate([
+            {
+                $match: { 
+                    $and: [
+                        { buildingID: employee.buildingID },
+                        { status: { $in: [1, 2] } },
+                    ]
+                },
+            },
+        ]);
+        employees.forEach(e => {
+            delete e.password
+        })
+        return res.status(200).json({
+            msg : 'Lay danh sach nhan vien thanh cong',
+            status : 0,
+            data : employees
+
         })
     } catch (err) {
         return res.status(500).json({
