@@ -19,6 +19,9 @@ var rolesSchema = new Schema({
         type: Date,
         default: Date.now,
     },
+    status : {
+        type : Number,
+    }
 })
 
 module.exports = mongoose.model("roles", rolesSchema);
