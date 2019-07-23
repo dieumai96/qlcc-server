@@ -8,9 +8,10 @@ const CONST = require('./../../config/const');
 const Building = require('./../../models/buildingSchema');
 const utils = require('./../../config/utils');
 const logUtils = require('./../../lib/logUtil')
+const Roles = require('./../../models/roleSchema');
 const router = express.Router();
 
-router.post('/create', passport.authenticate('jwt', { session: false }), (req, res, next) => {
+router.post('/create', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
 
     let Auth = req.user;
     let id = Auth.id;
@@ -48,28 +49,47 @@ router.post('/create', passport.authenticate('jwt', { session: false }), (req, r
             let building = await Building.findById(buildingID);
             if (building) {
                 Employee.find({ phone: phone })
-                    .then(exists => {
+                    .then(async exists => {
                         if (exists.length) {
                             return res.status(200).json({
                                 status: 1,
                                 msg: 'Nguoi dung nay da ton tai'
                             })
                         } else {
-                            let newEmployee = new Employee(payload);
-                            bcrypt.genSalt(10, (err, salt) => {
-                                bcrypt.hash(newEmployee.password, salt, (err, hash) => {
-                                    if (err) logUtils.error(err);
-                                    newEmployee.password = hash;
-                                    newEmployee
-                                        .save()
-                                        .then(employee => res.json({
-                                            status: 0,
-                                            msg: 'Them moi nhan vien thanh cong',
-                                            data: employee
-                                        }))
-                                        .catch(err => console.log(err));
-                                })
+                            let rolesOfBuilding = [];
+                            let findRoleOfBuilding = await Roles.find({ buildingID: buildingID });
+                            findRoleOfBuilding.forEach(e => {
+                                rolesOfBuilding.push(e.code);
                             })
+                            let check = true;
+                            roles.forEach((e, index) => {
+                                if (!rolesOfBuilding.includes(e)) {
+                                    check = false;
+                                }
+                            })
+                            if (check) {
+                                let newEmployee = new Employee(payload);
+                                bcrypt.genSalt(10, (err, salt) => {
+                                    bcrypt.hash(newEmployee.password, salt, (err, hash) => {
+                                        if (err) logUtils.error(err);
+                                        newEmployee.password = hash;
+                                        newEmployee
+                                            .save()
+                                            .then(employee => res.json({
+                                                status: 0,
+                                                msg: 'Thêm mới nhân viên thành công',
+                                                data: employee
+                                            }))
+                                            .catch(err => console.log(err));
+                                    })
+                                })
+                            } else {
+                                return res.status(400).json({
+                                    msg: 'Vai trò vừa thêm không tồn tại trong hệ thống',
+                                    status: 1,
+                                })
+                            }
+
                         }
                     }, err => {
                         return res.status(500).json({
@@ -204,11 +224,11 @@ router.post('/getAllEmployee', passport.authenticate('jwt', { session: false }),
             })
         }
         let conditionGet = {
-            buildingID : employee.buildingID,
+            buildingID: employee.buildingID,
         }
         let employees = await Employee.aggregate([
             {
-                $match: { 
+                $match: {
                     $and: [
                         { buildingID: employee.buildingID },
                         { status: { $in: [1, 2] } },
@@ -220,9 +240,9 @@ router.post('/getAllEmployee', passport.authenticate('jwt', { session: false }),
             delete e.password
         })
         return res.status(200).json({
-            msg : 'Lay danh sach nhan vien thanh cong',
-            status : 0,
-            data : employees
+            msg: 'Lay danh sach nhan vien thanh cong',
+            status: 0,
+            data: employees
 
         })
     } catch (err) {
