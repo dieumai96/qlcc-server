@@ -36,6 +36,7 @@ internals.DATA_TYPE = {
 internals.ROLES = {
     ADMIN: 'ADMIN',
     RCN: 'RCN',
+    TN : 'TN',
 }
 
 internals.NOTIFY_STATUS = {
