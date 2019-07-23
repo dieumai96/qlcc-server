@@ -6,20 +6,10 @@ const Building = require('./../../models/buildingSchema');
 const Roles = require('./../../models/roleSchema');
 const CONST = require('./../../config/const');
 
+const logUtils = require('./../../lib/logUtil')
 const passport = require('passport');
-
-class RolesModel {
-    code;
-    name;
-    description;
-    constructor(
-        code, name, description
-    ) {
-        this.code = code;
-        this.name = name;
-        this.description = description;
-    }
-}
+const Rx = require('rxjs');
+const Operators = require('rxjs/operators');
 
 const employeeInfo = async employeeId => {
     try {
@@ -60,29 +50,53 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
                 msg: 'Ma toa nha nay da ton tai',
             })
         } else {
-            let dtoRoles = [
-                { name: 'Bộ phận quản trị', roles: CONST.ROLES.ADMIN, description: 'Ban quản trị của toà nhà' },
-                { name: 'Bộ phận tiếp nhận', roles: CONST.ROLES.RCN, description: 'Bộ phận tiếp nhận của toà nhà' },
-                { name: 'Bộ phận thu ngân', roles: CONST.ROLES.TN, description: 'Bộ phận thu ngân của toà nhà' },
-            ]
+
 
             let buildingDto = new Building({
                 image,
                 name,
                 code,
                 status,
-                hotLine: hotLine,
+                hotLine,
                 blocks,
                 totalFlat,
                 address,
                 createdBy: employeeID,
             })
-            let save = await buildingDto.save();
-            return res.status(200).json({
-                status: 0,
-                msg: 'Them toa nha thanh cong',
-                data: buildingDto
-            })
+            logUtils.error("dto building", buildingDto);
+            buildingDto.save()
+                .then(async building => {
+                    let dtoRoles = [
+                        { name: 'Bộ phận quản trị', code: CONST.ROLES.ADMIN, description: 'Ban quản trị của toà nhà' },
+                        { name: 'Bộ phận tiếp nhận', code: CONST.ROLES.RCN, description: 'Bộ phận tiếp nhận của toà nhà' },
+                        { name: 'Bộ phận thu ngân', code: CONST.ROLES.TN, description: 'Bộ phận thu ngân của toà nhà' },
+                    ]
+                    let RxDtoRoles = Rx.from(dtoRoles);
+                    let count = 0;
+                    RxDtoRoles.pipe(
+                        Operators.concatMap(role => {
+                            role.buildingID = building._id;
+                            let roleDto = new Roles(role);
+                            let save = roleDto.save();
+                            return Rx.of({ save })
+                        })
+                    ).subscribe(_ => {
+                        count++;
+                        if (count == dtoRoles.length) {
+                            return res.status(200).json({
+                                msg: 'Thêm toà nhà mới thành công',
+                                data: building,
+                                status: 0,
+                            })
+                        }
+                    })
+                }).catch(err => {
+                    return res.status(400).json({
+                        status: 1,
+                        err: err,
+                        msg: 'Thêm toà nhà thất bại'
+                    })
+                })
         }
     } catch (error) {
         return res.status(500).json({
