@@ -1,4 +1,4 @@
-let PATH_UPLOADS = process.cwd() + '/uploads';
+let PATH_UPLOADS = process.cwd() + '../../uploads';
 
 module.exports = {
     tempFolder: PATH_UPLOADS,
