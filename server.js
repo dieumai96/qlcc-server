@@ -23,7 +23,7 @@ const port = process.env.PORT || 3000;
 //     }
 // }
 // init();
-mongoose.connect(`mongodb://localhost/express-qlcc-version2`)
+mongoose.connect(`mongodb://localhost/qlcc-server`)
     .then(res => console.log('Connected MongoDB'))
     .catch(err => console.log(err));
 // socket.init('http://localhost'); 

@@ -160,7 +160,7 @@ router.post('/login', async (req, res, next) => {
                             }
                         )
                     } else {
-                        return res.status(400).json({
+                        return res.status(200).json({
                             status: 1,
                             msg: 'Mat khau khong chinh xac'
                         })
@@ -172,7 +172,7 @@ router.post('/login', async (req, res, next) => {
                     })
                 })
             } else {
-                return res.status(400).json({
+                return res.status(200).json({
                     status: 1,
                     msg: 'Khong tim thay thong tin nguoi dung'
                 })

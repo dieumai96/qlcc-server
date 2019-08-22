@@ -211,4 +211,38 @@ router.post("/getAll", passport.authenticate('jwt', { session: false }), async (
         })
     }
 })
+
+router.post("/getBuildingInfomation", passport.authenticate('jwt', { session: false }), async (req, res) => {
+    const Auth = req.user;
+    const employeeID = Auth.id;
+    let { buildingID } = req.body;
+    try {
+        let employee = await Employee.findById(employeeID);
+        if (!employee) {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Khong tim thay thong tin user'
+            })
+        }
+        employee = employee.toJSON();
+        let building = await Building.findById(buildingID);
+        if (building) {
+            return res.status(200).json({
+                status: 0,
+                data: building
+            })
+        } else {
+            return res.status(400).json({
+                status: 1,
+                msg: 'Không tìm thấy thông tin chung cư'
+            })
+        }
+    } catch (err) {
+        return res.status(500).json({
+            status: -1,
+            msg: 'Co loi xay ra, vui long thu lai sau',
+            err: err,
+        })
+    }
+})
 module.exports = router;

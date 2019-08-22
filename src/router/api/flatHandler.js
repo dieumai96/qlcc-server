@@ -262,6 +262,7 @@ router.post('/getAll', passport.authenticate('jwt', { session: false }), async (
         //     })
         // }
         let building = await Building.findById(employee.buildingID);
+        console.log(building)
         if (!building) {
             return res.status(400).json({
                 msg: 'Ban khong thuoc pham vi toa nha nao',
