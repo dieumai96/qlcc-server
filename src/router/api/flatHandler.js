@@ -214,7 +214,7 @@ router.post('/edit', passport.authenticate('jwt', { session: false }), async (re
             let conditionExistsFlat = { block: flat.block, soPhong: flat.soPhong };
             let findFlat = await Flat.find(conditionExistsFlat);
 
-            if (findFlat.length) {
+            if (!findFlat.length) {
                 return res.status(200).json({
                     msg: 'Thong tin can ho nay da ton tai roi',
                     status: 1,
