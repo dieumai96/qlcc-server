@@ -9,6 +9,8 @@ const Building = require('./../../models/buildingSchema');
 const utils = require('./../../config/utils');
 const logUtils = require('./../../lib/logUtil')
 const Roles = require('./../../models/roleSchema');
+const Config = require('./../../lib/config')
+const tokenList = {}
 const router = express.Router();
 
 router.post('/create', passport.authenticate('jwt', { session: false }), async (req, res, next) => {
@@ -128,7 +130,7 @@ router.post('/login', async (req, res, next) => {
                     })
                 }
 
-                bcrypt.compare(password, employee.password).then(isMatch => {
+                bcrypt.compare(password, employee.password).then(async isMatch => {
                     console.log("SAO DEO VAO DAY", isMatch);
                     if (isMatch) {
                         const payload = {
@@ -144,21 +146,23 @@ router.post('/login', async (req, res, next) => {
                         if (employee.buildingID) {
                             payload.buildingID = employee.buildingID;
                         }
-                        jwt.sign(
+                        const token = await jwt.sign(
                             payload,
                             keys.secretOnKey,
                             {
                                 expiresIn: (Math.floor(new Date().getTime() / 1000) + (7 * 24 * 60 * 60)) * 1000
                             },
-                            (err, token) => {
-                                delete employee.password;
-                                res.status(200).json({
-                                    status: 0,
-                                    token: 'Bearer ' + token,
-                                    data: employee
-                                })
-                            }
                         )
+                        const refreshToken = await jwt.sign(payload, Config.refreshTokenSecret, { expiresIn: Config.refreshTokenLife })
+                        delete employee.password;
+                        const response = {
+                            status: 0,
+                            token: 'Bearer ' + token,
+                            refreshToken: refreshToken,
+                            data: employee
+                        }
+                        tokenList[refreshToken] = response
+                        res.status(200).json(response)
                     } else {
                         return res.status(200).json({
                             status: 1,
@@ -183,6 +187,30 @@ router.post('/login', async (req, res, next) => {
                 msg: 'Co loi he thong'
             })
         })
+})
+
+router.post('/token', (req, res) => {
+    // refresh the damn token
+    const postData = req.body
+    // if refresh token exists
+    if ((postData.refreshToken) && (postData.refreshToken in tokenList)) {
+        const user = {
+            id: postData._id,
+            fullName: postData.fullName,
+            phone: postData.phone,
+            email: postData.email,
+            userType: postData.userType,
+            date: Date.now(),
+        }
+        const token = jwt.sign(user, config.secret, { expiresIn: (Math.floor(new Date().getTime() / 1000) + (7 * 24 * 60 * 60)) * 1000 })
+        const response = {
+            "token": token,
+        }
+        tokenList[postData.refreshToken].token = token
+        res.status(200).json(response);
+    } else {
+        res.status(404).send('Invalid request')
+    }
 })
 
 
