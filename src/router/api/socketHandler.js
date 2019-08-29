@@ -6,7 +6,6 @@ const Flat = require('./../../models/flatSchema')
 const Building = require('./../../models/buildingSchema')
 
 const CONST = require('./../../config/const');
-
 const portSocket = process.env.PORT || 5000;
 const io = require('socket.io')(portSocket);
 var SocketHandler = {};
@@ -14,7 +13,7 @@ var SocketHandler = {};
 var online_users = {};
 
 function sendMsgBySql(listAccountID, data, eventName, sessionID) {
-  
+
     let async = require("async");
     log.info("=========== listAccountID: ", listAccountID);
     for (let i = 0, keys = Object.keys(online_users), ii = keys.length; i < ii; i++) {
@@ -98,6 +97,7 @@ SocketHandler.init = function () {
             }
         })
         socket.on('send-notification', async function (data, callback) {
+            log.error("=====================payload", data);
             let listEventUseID = [];
             let listEventEmployeeID = [];
             let queryEmployee = await Employee.find({
@@ -153,6 +153,7 @@ SocketHandler.init = function () {
                             $lookup:
                             {
                                 from: "flats",
+                                
                                 localField: "flatID",
                                 foreignField: "_id",
                                 as: "flat_info"

@@ -13,6 +13,9 @@ var userSchema = new Schema({
     email: {
         type: String,
     },
+    gender: {
+        type: String,
+    },
     buildingID: { type: Schema.Types.ObjectId, ref: 'buildings' },
     flatID: { type: Schema.Types.ObjectId, ref: 'flats' },
     avatar: {

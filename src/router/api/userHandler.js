@@ -10,7 +10,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const keys = require('./../../config/keys');
 router.post('/register', async (req, res) => {
-    let { flatCode, fullName, phone, password } = req.body;
+    let { flatCode, fullName, phone, password, gender } = req.body;
     try {
         let flatInfomation = await Flat.findOne({ code: flatCode });
         console.log(flatInfomation);
@@ -33,6 +33,7 @@ router.post('/register', async (req, res) => {
                     fullName,
                     phone,
                     password,
+                    gender,
                     fullNameKhongDau: utils.locDau(fullName),
                     status: constant.STATUS.WAIT_ACTIVE,
                     userType: constant.USER_TYPE.USER,

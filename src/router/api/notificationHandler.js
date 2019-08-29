@@ -180,7 +180,7 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
                 body.id = notification._id;
                 await pushNotification(body, employeeID, employee.buildingID, CONST.DML_TYPE.INSERT);
                 return res.status(200).json({
-                    msg: 'Tao thong bao thanh cong',
+                    msg: 'Create notification successfully',
                     status: 0,
                     data: body,
                 })
@@ -279,8 +279,8 @@ router.post('/getAllNofiticationForEmployee', passport.authenticate('jwt', { ses
             delete getAllNotification[i].events_docs;
         }
         return res.status(200).json({
-            msg: 'ok',
-            data: getAllNotification
+            data: getAllNotification,
+            status: 0,
         })
     } catch (err) {
         return res.status(500).json({

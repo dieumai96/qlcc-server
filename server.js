@@ -2,7 +2,7 @@ const http = require('http');
 const mongoose = require('mongoose');
 const app = require('./src');
 const socket = require('./src/router/api/socketHandler')
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 9000;
 
 // async function init() {
 //     try {
