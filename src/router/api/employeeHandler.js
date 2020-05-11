@@ -26,13 +26,13 @@ router.post('/create', passport.authenticate('jwt', { session: false }), async (
                     msg: 'Khong tim thay nhan vien'
                 })
             }
-            if (!(employee.roles.includes("ADMIN") || employee.roles.includes("ROOT"))) {
-                console.log(employee.roles.includes("ROOT"));
-                return res.status(200).json({
-                    status: 1,
-                    msg: 'Ban khong co quyen thuc hien thao tac nay'
-                })
-            }
+            // if (!(employee.roles.includes("ADMIN") || employee.roles.includes("ROOT"))) {
+            //     console.log(employee.roles.includes("ROOT"));
+            //     return res.status(200).json({
+            //         status: 1,
+            //         msg: 'Ban khong co quyen thuc hien thao tac nay'
+            //     })
+            // }
             let payload = {
                 phone,
                 email,
